@@ -32,32 +32,32 @@ This project follows a strict MLOps pipeline to ensure high-quality model deploy
 ```mermaid
 graph LR
     %% Styles
-    classDef phasestyle fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef stepstyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,rx:5;
-    classDef decisionstyle fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,rx:5;
-    classDef artifactstyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px,rx:5;
+    classDef phasestyle fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef stepstyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef decisionstyle fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+    classDef artifactstyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px
 
-    subgraph "Phase 1: Local Dev & Validation"
+    subgraph P1 [Phase 1: Local Dev & Validation]
         direction TB
         S1[make install/check-data]:::stepstyle --> val{Data Valid?}:::decisionstyle
         val -->|Yes| S2[make train]:::stepstyle
         val -->|No| Fix[Fix Data]
     end
 
-    subgraph "Phase 2: Experimentation & Training"
+    subgraph P2 [Phase 2: Experimentation & Training]
         direction TB
         S2 -->|Log Metrics| MLflow[MLflow Tracking]:::artifactstyle
         MLflow --> Eval{Performance OK?}:::decisionstyle
     end
 
-    subgraph "Phase 3: Model Registry"
+    subgraph P3 [Phase 3: Model Registry]
         direction TB
         Eval -->|Yes| S3[make save-model]:::stepstyle
         S3 --> Reg[Model Registry]:::artifactstyle
         Reg -->|Tag: Production| ProdModel[Production Model]:::artifactstyle
     end
 
-    subgraph "Phase 4: CI/CD & Deployment"
+    subgraph P4 [Phase 4: CI/CD & Deployment]
         direction TB
         ProdModel --> S4[make git-push]:::stepstyle
         S4 -->|Trigger CI| GH[GitHub Actions]:::stepstyle
@@ -65,10 +65,10 @@ graph LR
         Docker -->|Push| Hub[Docker Hub]:::artifactstyle
     end
 
-    style "Phase 1: Local Dev & Validation" fill:#f5f5f5,stroke:#9e9e9e
-    style "Phase 2: Experimentation & Training" fill:#f5f5f5,stroke:#9e9e9e
-    style "Phase 3: Model Registry" fill:#f5f5f5,stroke:#9e9e9e
-    style "Phase 4: CI/CD & Deployment" fill:#f5f5f5,stroke:#9e9e9e
+    style P1 fill:#f5f5f5,stroke:#9e9e9e
+    style P2 fill:#f5f5f5,stroke:#9e9e9e
+    style P3 fill:#f5f5f5,stroke:#9e9e9e
+    style P4 fill:#f5f5f5,stroke:#9e9e9e
 ```
 
 ### Note on Production Promotion
