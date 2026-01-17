@@ -29,43 +29,70 @@ import pandas as pd
 import mlflow
 
 # === MODEL LOADING CONFIGURATION ===
-# IMPORTANT: This path is set during Docker container build
-# In development: uses local MLflow artifacts
-# In production: uses model copied to container at build time
-MODEL_DIR = "/app/model"
+MODEL_NAME = "telco-churn-model"
+MODEL_STAGE = "Production"
+
+# Initialize MLflow tracking
+import mlflow
+from mlflow.tracking import MlflowClient
+tracking_uri = f"file://{os.getcwd()}/mlruns"
+mlflow.set_tracking_uri(tracking_uri)
+client = MlflowClient(tracking_uri=tracking_uri)
 
 try:
-    # Load the trained XGBoost model in MLflow pyfunc format
-    # This ensures compatibility regardless of the underlying ML library
-    model = mlflow.pyfunc.load_model(MODEL_DIR)
-    print(f"✅ Model loaded successfully from {MODEL_DIR}")
-except Exception as e:
-    print(f"❌ Failed to load model from {MODEL_DIR}: {e}")
-    # Fallback for local development (OPTIONAL)
+    # 1. Find the Production version in the registry
+    versions = client.get_latest_versions(MODEL_NAME, [MODEL_STAGE])
+    if not versions:
+        raise Exception(f"No model version found for {MODEL_NAME} in {MODEL_STAGE} stage")
+    
+    prod_version = versions[0]
+    run_id = prod_version.run_id
+    print(f"📦 Found Production model (v{prod_version.version}) from run: {run_id}")
+    
+    # 2. Download artifacts: the model folder AND the feature metadata
+    # We download the model folder specifically for pyfunc loading
+    model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
+    model = mlflow.pyfunc.load_model(model_uri)
+    
+    # We also need the feature columns text file which is at the run's root artifacts
+    # download_artifacts returns the local path to the downloaded file/folder
+    MODEL_DIR = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="model")
+    FEATURE_FILE = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="feature_columns.txt")
+    
+    print(f"✅ Model and features loaded from run {run_id}")
+
+except Exception as registry_error:
+    print(f"⚠️ Registry load failed: {registry_error}. Falling back to local scans...")
     try:
-        # Try loading from local MLflow tracking
         import glob
-        local_model_paths = glob.glob("./mlruns/*/*/artifacts/model")
-        if local_model_paths:
-            latest_model = max(local_model_paths, key=os.path.getmtime)
-            model = mlflow.pyfunc.load_model(latest_model)
-            MODEL_DIR = latest_model
-            print(f"✅ Fallback: Loaded model from {latest_model}")
-        else:
-            raise Exception("No model found in local mlruns")
+        # Try to find any local model artifact
+        model_paths = glob.glob("./mlruns/*/*/artifacts/model") or glob.glob("./mlruns/*/*/models/*/artifacts")
+        if not model_paths:
+            raise Exception("No local model artifacts found.")
+        
+        MODEL_DIR = max(model_paths, key=os.path.getmtime)
+        model = mlflow.pyfunc.load_model(MODEL_DIR)
+        
+        # Look for feature_columns.txt in same or parent dir
+        FEATURE_FILE = os.path.join(MODEL_DIR, "feature_columns.txt")
+        if not os.path.exists(FEATURE_FILE):
+            FEATURE_FILE = os.path.join(os.path.dirname(MODEL_DIR), "feature_columns.txt")
+            
+        if not os.path.exists(FEATURE_FILE):
+             raise Exception("feature_columns.txt not found locally.")
+             
+        print(f"✅ Fallback: Loaded model from {MODEL_DIR}")
     except Exception as fallback_error:
-        raise Exception(f"Failed to load model: {e}. Fallback failed: {fallback_error}")
+        print(f"❌ CRITICAL ERROR: Could not load model. Run 'make train' then 'make save-model'.")
+        raise fallback_error
 
 # === FEATURE SCHEMA LOADING ===
-# CRITICAL: Load the exact feature column order used during training
-# This ensures the model receives features in the expected order
 try:
-    feature_file = os.path.join(MODEL_DIR, "feature_columns.txt")
-    with open(feature_file) as f:
+    with open(FEATURE_FILE) as f:
         FEATURE_COLS = [ln.strip() for ln in f if ln.strip()]
-    print(f"✅ Loaded {len(FEATURE_COLS)} feature columns from training")
+    print(f"✅ Successfully loaded {len(FEATURE_COLS)} feature columns")
 except Exception as e:
-    raise Exception(f"Failed to load feature columns: {e}")
+    raise Exception(f"Failed to load feature columns metadata: {e}")
 
 # === FEATURE TRANSFORMATION CONSTANTS ===
 # CRITICAL: These mappings must exactly match those used in training

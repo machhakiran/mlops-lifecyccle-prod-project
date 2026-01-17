@@ -105,9 +105,6 @@ def main(args):
         with open(os.path.join(artifacts_dir, "feature_columns.json"), "w") as f:
             json.dump(feature_cols, f)
 
-        # Log to MLflow for production serving
-        mlflow.log_text("\n".join(feature_cols), artifact_file="feature_columns.txt")
-
         # ESSENTIAL: Save preprocessing artifacts for serving pipeline
         # These artifacts ensure training and serving use identical transformations
         preprocessing_artifact = {
@@ -206,7 +203,11 @@ def main(args):
             model, 
             artifact_path="model"  # This creates a 'model/' folder in MLflow run artifacts
         )
-        print("✅ Model saved to MLflow for serving pipeline")
+        
+        # Log feature columns for registry compatibility
+        mlflow.log_text("\n".join(feature_cols), artifact_file="feature_columns.txt")
+        
+        print("✅ Model and feature metadata saved to MLflow")
 
         # === Final Performance Summary ===
         print(f"\n⏱️  Performance Summary:")

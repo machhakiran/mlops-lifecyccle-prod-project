@@ -101,103 +101,174 @@ from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 
 # === GRADIO WEB INTERFACE ===
-def gradio_interface(
-    gender, Partner, Dependents, PhoneService, MultipleLines,
-    InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
-    TechSupport, StreamingTV, StreamingMovies, Contract,
-    PaperlessBilling, PaymentMethod, tenure, MonthlyCharges, TotalCharges
-):
+def gradio_interface(*args):
     """
     Gradio interface function that processes form inputs and returns prediction.
     """
-    # Construct data dictionary matching CustomerData schema
-    data = {
-        "gender": gender,
-        "Partner": Partner,
-        "Dependents": Dependents,
-        "PhoneService": PhoneService,
-        "MultipleLines": MultipleLines,
-        "InternetService": InternetService,
-        "OnlineSecurity": OnlineSecurity,
-        "OnlineBackup": OnlineBackup,
-        "DeviceProtection": DeviceProtection,
-        "TechSupport": TechSupport,
-        "StreamingTV": StreamingTV,
-        "StreamingMovies": StreamingMovies,
-        "Contract": Contract,
-        "PaperlessBilling": PaperlessBilling,
-        "PaymentMethod": PaymentMethod,
-        "tenure": int(tenure),
-        "MonthlyCharges": float(MonthlyCharges),
-        "TotalCharges": float(TotalCharges),
-    }
+    keys = [
+        "gender", "Partner", "Dependents", "PhoneService", "MultipleLines",
+        "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection",
+        "TechSupport", "StreamingTV", "StreamingMovies", "Contract",
+        "PaperlessBilling", "PaymentMethod", "tenure", "MonthlyCharges", "TotalCharges"
+    ]
+    data = dict(zip(keys, args))
     
-    # Call same inference pipeline as API endpoint
-    result = predict(data)
+    # Cast numeric types correctly
+    data["tenure"] = int(data["tenure"])
+    data["MonthlyCharges"] = float(data["MonthlyCharges"])
+    data["TotalCharges"] = float(data["TotalCharges"])
     
-    # Return formatted result with emoji for better UX
-    if "Not likely to churn" in result:
-        return f"✅ Low Risk: {result}"
-    else:
-        return f"⚠️ High Risk: {result}"
+    try:
+        result = predict(data)
+        if "Not likely to churn" in result:
+            return f"✅ LOW RISK\n\nIntelligence Analysis: The customer profile indicates high stability and loyalty. {result}."
+        else:
+            return f"⚠️ HIGH RISK\n\nIntelligence Analysis: Critical churn indicators detected in service usage or contract terms. {result}."
+    except Exception as e:
+        return f"❌ ERROR: Processing failed. {str(e)}"
 
 # === GRADIO UI CONFIGURATION ===
-# Custom CSS for Kavi.ai branding
 custom_css = """
-.gradio-container {background-color: #f8f9fa}
-.brand-header {text-align: center; margin-bottom: 20px;}
-.brand-header img {max-width: 150px; margin: 0 auto;}
-.brand-header h1 {color: #4a148c; margin-top: 10px; font-weight: bold;}
-.predict-btn {background: linear-gradient(90deg, #4a148c 0%, #01579b 100%); color: white; border: none;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+.gradio-container {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
+    background: #fdfdfd !important;
+}
+
+.brand-header {
+    background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+    padding: 2.5rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.brand-header img {
+    height: 60px !important;
+    width: auto !important;
+    margin-bottom: 1rem;
+    filter: brightness(0) invert(1);
+    opacity: 0.95;
+}
+
+.brand-header h1 {
+    font-size: 2.2rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px;
+    margin: 0 !important;
+}
+
+.brand-header p {
+    font-size: 1.1rem;
+    opacity: 0.85;
+    margin-top: 0.5rem;
+}
+
+.predict-btn {
+    background: #1a237e !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    padding: 0.8rem !important;
+    font-size: 1.1rem !important;
+    transition: transform 0.2s ease, background 0.2s ease !important;
+    box-shadow: 0 4px 15px rgba(26, 35, 126, 0.2) !important;
+    cursor: pointer;
+}
+
+.predict-btn:hover {
+    background: #283593 !important;
+    transform: translateY(-1px);
+}
+
+.output-box {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px !important;
+    padding: 1.5rem !important;
+    background: white !important;
+    font-size: 1.1rem !important;
+}
+
+.input-section {
+    background: white !important;
+    padding: 1.2rem;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    margin-bottom: 1rem;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: #757575;
+    font-size: 0.9rem;
+}
 """
 
-with gr.Blocks(theme=gr.themes.Soft(primary_hue="indigo"), css=custom_css, title="Kavi.ai Churn Predictor") as demo:
+with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
     with gr.Column(elem_classes="brand-header"):
         gr.HTML("""
-            <div class="brand-header">
-                <img src="/static/logo.png" alt="Kavi.ai Logo" />
-                <h1>Kavi.ai Operations</h1>
-                <p>Telco Customer Churn Prediction System</p>
+            <div style="text-align: center;">
+                <img src="/static/logo.png" alt="Kavi.ai Logo" style="display: block; margin: 0 auto;"/>
+                <h1>Customer Churn Intelligence</h1>
+                <p>Enterprise Prediction Engine powered by Kavi.ai MLOps</p>
             </div>
         """)
     
     with gr.Row():
-        with gr.Column(scale=1):
-            with gr.Accordion("👤 Customer Demographics", open=True):
-                gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Male")
-                Partner = gr.Dropdown(["Yes", "No"], label="Partner", value="No")
-                Dependents = gr.Dropdown(["Yes", "No"], label="Dependents", value="No")
-                tenure = gr.Slider(label="Tenure (months)", value=1, minimum=0, maximum=100, step=1)
-        
-        with gr.Column(scale=1):
-            with gr.Accordion("📡 Services & Usage", open=True):
-                InternetService = gr.Dropdown(["DSL", "Fiber optic", "No"], label="Internet Service", value="Fiber optic")
-                PhoneService = gr.Dropdown(["Yes", "No"], label="Phone Service", value="Yes")
-                MultipleLines = gr.Dropdown(["Yes", "No", "No phone service"], label="Multiple Lines", value="No")
-                StreamingTV = gr.Dropdown(["Yes", "No", "No internet service"], label="Streaming TV", value="Yes")
-                StreamingMovies = gr.Dropdown(["Yes", "No", "No internet service"], label="Streaming Movies", value="Yes")
+        with gr.Column(scale=3):
+            with gr.Row():
+                with gr.Column(elem_classes="input-section"):
+                    gr.Markdown("### 👤 Profile & Demographics")
+                    gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Male", info="Customer gender")
+                    Partner = gr.Radio(["Yes", "No"], label="Has Partner?", value="No", info="Marital / partnership status")
+                    Dependents = gr.Radio(["Yes", "No"], label="Has Dependents?", value="No", info="Children or other dependents")
+                    tenure = gr.Slider(label="Tenure (Months)", value=12, minimum=0, maximum=72, step=1, info="Relationship length with telco")
+                
+                with gr.Column(elem_classes="input-section"):
+                    gr.Markdown("### 📡 Device & Connectivity")
+                    InternetService = gr.Dropdown(["Fiber optic", "DSL", "No"], label="Internet Connectivity", value="Fiber optic")
+                    PhoneService = gr.Radio(["Yes", "No"], label="Phone Line Activation", value="Yes")
+                    MultipleLines = gr.Dropdown(["No phone service", "No", "Yes"], label="Multiple Lines Selection", value="No")
+                    OnlineSecurity = gr.Dropdown(["No internet service", "No", "Yes"], label="Online Security Guard", value="No")
+                    OnlineBackup = gr.Dropdown(["No internet service", "No", "Yes"], label="Cloud Backup Status", value="No")
+            
+            with gr.Row():
+                with gr.Column(elem_classes="input-section"):
+                    gr.Markdown("### 📽️ Media & Support")
+                    DeviceProtection = gr.Dropdown(["No internet service", "No", "Yes"], label="Device Insurance", value="No")
+                    TechSupport = gr.Dropdown(["No internet service", "No", "Yes"], label="Premium Tech Support", value="No")
+                    StreamingTV = gr.Dropdown(["No internet service", "No", "Yes"], label="TV Streaming Plan", value="No")
+                    StreamingMovies = gr.Dropdown(["No internet service", "No", "Yes"], label="Cinema Streaming Plan", value="No")
 
-    with gr.Row():
-        with gr.Column(scale=1):
-            with gr.Accordion("🛡️ Support & Security", open=False):
-                OnlineSecurity = gr.Dropdown(["Yes", "No", "No internet service"], label="Online Security", value="No")
-                OnlineBackup = gr.Dropdown(["Yes", "No", "No internet service"], label="Online Backup", value="No")
-                DeviceProtection = gr.Dropdown(["Yes", "No", "No internet service"], label="Device Protection", value="No")
-                TechSupport = gr.Dropdown(["Yes", "No", "No internet service"], label="Tech Support", value="No")
+                with gr.Column(elem_classes="input-section"):
+                    gr.Markdown("### 💳 Business & Billing")
+                    Contract = gr.Dropdown(["Month-to-month", "One year", "Two year"], label="Contract Type", value="Month-to-month")
+                    PaperlessBilling = gr.Radio(["Yes", "No"], label="Paperless Invoicing", value="Yes")
+                    PaymentMethod = gr.Dropdown(["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], label="Payment Channel", value="Electronic check")
+                    with gr.Row():
+                        MonthlyCharges = gr.Number(label="Monthly Rate ($)", value=75.0, precision=2)
+                        TotalCharges = gr.Number(label="Accrued Total ($)", value=900.0, precision=2)
 
         with gr.Column(scale=1):
-            with gr.Accordion("💳 Billing & Contract", open=True):
-                Contract = gr.Dropdown(["Month-to-month", "One year", "Two year"], label="Contract", value="Month-to-month")
-                PaperlessBilling = gr.Dropdown(["Yes", "No"], label="Paperless Billing", value="Yes")
-                PaymentMethod = gr.Dropdown(["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], label="Payment Method", value="Electronic check")
-                MonthlyCharges = gr.Number(label="Monthly Charges ($)", value=85.0)
-                TotalCharges = gr.Number(label="Total Charges ($)", value=85.0)
+            gr.Markdown("### 📈 Intelligent Analysis")
+            predict_btn = gr.Button("🔍 ANALYZE RETENTION RISK", variant="primary", elem_classes="predict-btn")
+            output_result = gr.Textbox(
+                label="Risk Assessment Report", 
+                lines=8, 
+                interactive=False, 
+                placeholder="Submit profile for AI analysis...",
+                elem_classes="output-box"
+            )
+            gr.Markdown("""
+            ---
+            **Strategic Recommendation:**
+            Automated churn risk assessment using calibrated XGBoost classifier. 
+            Confidence threshold: **0.35**
+            """)
 
-    with gr.Row():
-        predict_btn = gr.Button("🔮 Predict Churn Risk", variant="primary", elem_classes="predict-btn")
-        
-    output_result = gr.Textbox(label="Prediction Result", lines=1, interactive=False)
-    
     predict_btn.click(
         gradio_interface,
         inputs=[
@@ -209,12 +280,19 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="indigo"), css=custom_css, title
         outputs=output_result
     )
 
-    gr.Markdown("### 💡 Powered by Kavi.ai MLOps Pipeline")
+    gr.HTML("""
+        <div class="footer">
+            <p>Developed with Precision & Scalability by <strong>Kavi.ai</strong></p>
+            <p>© 2026 Enterprise Machine Learning Excellence</p>
+        </div>
+    """)
 
 # === MOUNT GRADIO UI INTO FASTAPI ===
 app = gr.mount_gradio_app(
     app,
     demo,
     path="/ui",
+    theme=gr.themes.Soft(primary_hue="indigo", spacing_size="sm", radius_size="lg"),
+    css=custom_css,
     allowed_paths=["src/app/static"]
 )

@@ -53,12 +53,12 @@ help:
 # ============================================================================
 install:
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(BOLD)📦 Step 1: Installing dependencies...$(NC)"
+	@echo "$(BOLD)📦 Step 1: Installing core dependencies...$(NC)"
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@$(PYTHON) -m pip install -r requirements.txt
-	@echo "$(CYAN)Verifying MLflow installation...$(NC)"
-	@$(PYTHON) -m pip show mlflow >/dev/null 2>&1 || $(PYTHON) -m pip install mlflow>=2.19.0
-	@echo "$(GREEN)✅ Dependencies installed successfully!$(NC)"
+	@$(PYTHON) -m pip install pandas mlflow xgboost scikit-learn fastapi uvicorn gradio joblib pydantic pydantic-settings matplotlib seaborn || \
+		(echo "$(YELLOW)⚠️  Standard install failed, attempting minimal install...$(NC)" && \
+		$(PYTHON) -m pip install pandas mlflow xgboost scikit-learn fastapi uvicorn gradio joblib)
+	@echo "$(GREEN)✅ Core dependencies installed successfully!$(NC)"
 	@echo "$(YELLOW)💡 Next: run 'make check-data'$(NC)"
 
 # ============================================================================
@@ -146,7 +146,7 @@ serve:
 	@echo "  $(GREEN)👉 API Docs:$(NC)         $(BOLD)http://localhost:8000/docs$(NC)"
 	@echo "  $(GREEN)👉 Health Check:$(NC)     $(BOLD)http://localhost:8000/$(NC)"
 	@echo ""
-	@uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
+	@$(PYTHON) -m uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # ============================================================================
 # Step 7: Push to GitHub
