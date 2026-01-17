@@ -25,7 +25,13 @@ A production-ready machine learning solution for predicting customer churn in th
 - ✅ **Containerization** - Docker for consistent deployment
 - ✅ **CI/CD** - GitHub Actions for automated builds
 
-## 🚀 MLOps Lifecycle: Path to Production
+## � Interface Preview
+
+<div align="center">
+  <img src="ui_preview.png" alt="Telco Churn Prediction UI" width="100%"/>
+</div>
+
+## �🚀 MLOps Lifecycle: Path to Production
 
 This project follows a strict MLOps pipeline to ensure high-quality model deployment. The diagram below illustrates how code and data evolve from local development to production.
 
