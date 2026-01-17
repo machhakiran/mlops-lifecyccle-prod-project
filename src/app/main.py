@@ -138,7 +138,9 @@ def gradio_interface(
     print(f"DEBUG: Processing prediction for customer. Tenure: {tenure}, Monthly: {MonthlyCharges}", file=sys.stderr)
     
     import datetime
+    import uuid
     timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    run_id = str(uuid.uuid4())[:8]
     
     logs = [
         f"[{timestamp}] [SYSTEM] Initializing Kavi.ai Inference Engine...",
@@ -150,18 +152,26 @@ def gradio_interface(
         logs.append(f"[{timestamp}] [TRANSFORM] Applying binary encoding to demographics...")
         logs.append(f"[{timestamp}] [TRANSFORM] Executing one-hot encoding for services...")
         
-        result = predict(data)
+        result_dict = predict(data)
+        
+        # Extract details
+        prediction = result_dict["prediction"]
+        score = result_dict["score"]
+        features = result_dict["features_used"]
         
         logs.append(f"[{timestamp}] [MODEL] Invoking XGBoost production model v8...")
-        logs.append(f"[{timestamp}] [RESULT] Prediction generated: {result}")
+        logs.append(f"[{timestamp}] [INFO] Active Features: {', '.join(features[:5])}...") 
+        logs.append(f"[{timestamp}] [RESULT] Run {run_id}: {prediction} (Score: {score:.1f}%)")
         logs.append(f"[{timestamp}] [DONE] Final Risk Assessment completed.")
         
         log_text = "\n".join(logs)
         
-        if "Not likely to churn" in result:
-            report = f"✅ LOW RISK\n\nIntelligence Analysis: The customer profile indicates high stability and loyalty. {result}."
+        header = f"📊 ANALYSIS REPORT #{run_id}\n----------------------------------\n"
+        
+        if "Likely to churn" in prediction:
+            report = f"{header}⚠️ HIGH RISK DETECTED (Score: {score:.1f}%)\n\nIntelligence Analysis:\nCritical indicators found. Immediate retention offer recommended.\n\nConfidence: {score:.1f}%"
         else:
-            report = f"⚠️ HIGH RISK\n\nIntelligence Analysis: Critical churn indicators detected in service usage or contract terms. {result}."
+            report = f"{header}✅ LOW RISK PROFILE (Score: {score:.1f}%)\n\nIntelligence Analysis:\nCustomer demonstrates high stability.\n\nConfidence: {100-score:.1f}%"
             
         return report, log_text
         

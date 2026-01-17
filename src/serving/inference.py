@@ -196,14 +196,16 @@ def predict(input_dict: dict) -> str:
     1. Convert input dictionary to DataFrame
     2. Apply feature transformations (identical to training)
     3. Generate model prediction using loaded XGBoost model
-    4. Convert prediction to user-friendly string
+    4. Return structured dictionary with prediction and metadata
     
     Args:
-        input_dict: Dictionary containing raw customer data with keys matching
-                   the CustomerData schema (18 features total)
+        input_dict: Dictionary containing raw customer data (feature keys)
                    
     Returns:
-        Human-readable prediction string:
+        Dictionary containing:
+        - "prediction": String (Likely/Not likely)
+        - "score": Float (0-100)
+        - "features_used": List of columns
         - "Likely to churn" for high-risk customers (model prediction = 1)
         - "Not likely to churn" for low-risk customers (model prediction = 0)
         
@@ -225,44 +227,62 @@ def predict(input_dict: dict) -> str:
     df_enc = _serve_transform(df)
     
     # === STEP 3: Generate Model Prediction ===
+    # === STEP 3: Generate Model Prediction ===
     try:
-        # Debug logging to see the actual wrapper type
-        print(f"DEBUG: Model type: {type(model)}", file=sys.stderr)
+        prob_churn = -1.0
         
-        # Try to get probabilities for more nuanced risk assessment
-        # MLflow pyfunc models often have a predict() that can be configured, 
-        # but let's check for underlying flavors or specific methods.
-        
-        prob_churn = 0.5 # Default
-        
-        # Check if it's a pyfunc wrapper
-        try:
-            # Some pyfunc versions support predict_proba, others need ._model_impl
-            if hasattr(model, "predict_proba"):
+        # 1. Try predict_proba (Standard Sklearn/XGBoost)
+        if hasattr(model, "predict_proba"):
+            try:
                 probs = model.predict_proba(df_enc)
-                prob_churn = float(probs[0][1] if len(probs[0]) > 1 else probs[0])
-            elif hasattr(model, "predict") and "params" in str(model.predict.__doc__ or ""):
-                # Some MLflow models take params like {"predict_method": "predict_proba"}
-                pass
-        except:
-            pass
-            
+                if hasattr(probs, "tolist"):
+                    probs = probs.tolist()
+                # Handle [[p0, p1]] format
+                if len(probs) > 0 and (isinstance(probs[0], list) or hasattr(probs[0], "__len__")):
+                     prob_churn = float(probs[0][1])
+                else:
+                     prob_churn = float(probs[1]) # If flat array
+            except Exception as e:
+                print(f"DEBUG: predict_proba failed: {e}", file=sys.stderr)
+
+        # 2. Fallback to predict() if probability failed
         preds = model.predict(df_enc)
-        # Handle the case where predict() returns a probability if configured,
-        # but usually it returns classes.
+        if hasattr(preds, "tolist"):
+             preds = preds.tolist()
         
-        result = preds[0] if hasattr(preds, "__len__") else preds
-        
-        # If we couldn't get probability, use result to set 0.9 or 0.1
-        if prob_churn == 0.5:
-             prob_churn = 0.9 if result == 1 else 0.1
+        # Extract scalar prediction
+        if isinstance(preds, (list, tuple)) and len(preds) >= 1:
+            result = int(preds[0])
+        else:
+            result = int(preds)
+
+        # 3. Consolidate Score
+        # If we got a valid probability, use it
+        if prob_churn >= 0.0:
+            # Enforce consistency: If prob > 0.5 but result is 0 (rare), trust prob?
+            # Actually, let's just use prob for scoring.
+            # Enterprise Usage: Threshold might be custom.
+            pass 
+        else:
+            # Fallback: Create synthetic score based on class
+            prob_churn = 0.85 if result == 1 else 0.15
+            
+        score_pct = prob_churn * 100
             
     except Exception as e:
         raise Exception(f"Model prediction failed: {e}")
     
     # === STEP 4: Convert to Business-Friendly Output ===
-    score_pct = prob_churn * 100
-    if result == 1:
-        return f"Likely to churn (Risk Score: {score_pct:.1f}%)"
-    else:
-        return f"Not likely to churn (Risk Score: {score_pct:.1f}%)"
+    # Using 0.35 threshold for High Risk warning
+    is_high_risk = prob_churn >= 0.35
+    
+    risk_label = "Likely to churn" if is_high_risk else "Not likely to churn"
+    
+    # Return tuple: (TextResult, DebugInfo)
+    return {
+        "prediction": risk_label,
+        "score": score_pct,
+        "raw_prob": prob_churn,
+        "threshold_used": 0.35,
+        "features_used": df_enc.columns.tolist()
+    }
