@@ -48,3 +48,4 @@ def test_predict_endpoint_invalid_data():
     response = client.post("/predict", json=invalid_data)
     assert response.status_code == 422  # Validation error
 
+

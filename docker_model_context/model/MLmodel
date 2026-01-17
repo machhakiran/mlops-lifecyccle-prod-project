@@ -1,0 +1,53 @@
+artifact_path: file:///Users/kavi/Desktop/Kiran/Telco-Customer-Churn-ML/mlruns/868366420203886999/models/m-a7283c0aebf44cdab157371450197733/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.14.2
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+is_signature_from_type_hint: false
+mlflow_version: 3.8.1
+model_id: m-a7283c0aebf44cdab157371450197733
+model_size_bytes: 1378683
+model_uuid: m-a7283c0aebf44cdab157371450197733
+prompts: null
+run_id: 2e29d3dac7b244dca9b37f8181ebb0d0
+signature:
+  inputs: '[{"type": "long", "name": "gender", "required": true}, {"type": "long",
+    "name": "SeniorCitizen", "required": true}, {"type": "long", "name": "Partner",
+    "required": true}, {"type": "long", "name": "Dependents", "required": true}, {"type":
+    "long", "name": "tenure", "required": true}, {"type": "long", "name": "PhoneService",
+    "required": true}, {"type": "long", "name": "PaperlessBilling", "required": true},
+    {"type": "double", "name": "MonthlyCharges", "required": true}, {"type": "double",
+    "name": "TotalCharges", "required": true}, {"type": "long", "name": "MultipleLines_No
+    phone service", "required": true}, {"type": "long", "name": "MultipleLines_Yes",
+    "required": true}, {"type": "long", "name": "InternetService_Fiber optic", "required":
+    true}, {"type": "long", "name": "InternetService_No", "required": true}, {"type":
+    "long", "name": "OnlineSecurity_No internet service", "required": true}, {"type":
+    "long", "name": "OnlineSecurity_Yes", "required": true}, {"type": "long", "name":
+    "OnlineBackup_No internet service", "required": true}, {"type": "long", "name":
+    "OnlineBackup_Yes", "required": true}, {"type": "long", "name": "DeviceProtection_No
+    internet service", "required": true}, {"type": "long", "name": "DeviceProtection_Yes",
+    "required": true}, {"type": "long", "name": "TechSupport_No internet service",
+    "required": true}, {"type": "long", "name": "TechSupport_Yes", "required": true},
+    {"type": "long", "name": "StreamingTV_No internet service", "required": true},
+    {"type": "long", "name": "StreamingTV_Yes", "required": true}, {"type": "long",
+    "name": "StreamingMovies_No internet service", "required": true}, {"type": "long",
+    "name": "StreamingMovies_Yes", "required": true}, {"type": "long", "name": "Contract_One
+    year", "required": true}, {"type": "long", "name": "Contract_Two year", "required":
+    true}, {"type": "long", "name": "PaymentMethod_Credit card (automatic)", "required":
+    true}, {"type": "long", "name": "PaymentMethod_Electronic check", "required":
+    true}, {"type": "long", "name": "PaymentMethod_Mailed check", "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float32", "shape": [-1,
+    2]}}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-01-17 07:23:35.951125'

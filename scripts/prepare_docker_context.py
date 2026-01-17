@@ -63,11 +63,25 @@ def main():
     try:
         # download_artifacts handles the source logic (file, s3, etc)
         client.download_artifacts(run_id, "", target_dir)
-        print("✅ Success: Artifacts downloaded.")
+        print("✅ Success: Run artifacts downloaded.")
         
         # Verify if 'model' folder exists
         if not os.path.exists(os.path.join(target_dir, "model")):
-            print("⚠️  Warning: 'model' folder not found in artifacts. Inference might fail if not checked.")
+            print("⚠️  'model' folder not found in run artifacts. Attempting to download from Registry...")
+            try:
+                model_uri = "models:/telco-churn-model/Production"
+                print(f"📦 Downloading model from Registry: {model_uri}")
+                
+                # Download strictly the model folder to the target directory
+                # Note: mlflow.artifacts.download_artifacts returns the local path
+                local_model_path = mlflow.artifacts.download_artifacts(artifact_uri=model_uri, dst_path=os.path.join(target_dir, "model"))
+                print(f"✅ Success: Model downloaded from Registry to {local_model_path}")
+                
+            except Exception as reg_err:
+                print(f"❌ Failed to download from registry: {reg_err}")
+                print("⚠️  Warning: Inference might fail if not checked.")
+        else:
+            print("✅ 'model' artifacts present.")
             
     except Exception as e:
         print(f"Error downloading artifacts: {e}")

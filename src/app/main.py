@@ -279,7 +279,11 @@ custom_css = """
     margin-bottom: 1rem;
 }
 """
-with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
+with gr.Blocks(
+    title="Kavi.ai | Churn Intelligence",
+    theme=gr.themes.Soft(primary_hue="indigo", spacing_size="sm", radius_size="lg"),
+    css=custom_css
+) as demo:
     with gr.Column(elem_classes="brand-header"):
         gr.HTML("""
             <div class="header-text">

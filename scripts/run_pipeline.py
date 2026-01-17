@@ -10,6 +10,8 @@ import argparse
 import pandas as pd
 import mlflow
 import mlflow.sklearn
+import mlflow.xgboost
+from mlflow.models.signature import infer_signature
 from posthog import project_root
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
@@ -198,16 +200,24 @@ def main(args):
 
         # === STAGE 7: Model Serialization and Logging ===
         print("💾 Saving model to MLflow...")
-        # ESSENTIAL: Log model in MLflow's standard format for serving
+        
+        # CRITICAL: Infer model signature for input/output validation
+        # This ensures the model knows what data format to expect in production
+        signature = infer_signature(X_train, model.predict_proba(X_train))
+        
+        # ESSENTIAL: Log model using sklearn logger (compatible with XGBoost sklearn API)
+        # This creates a proper MLflow model with MLmodel file for Docker deployment
         mlflow.sklearn.log_model(
-            model, 
-            artifact_path="model"  # This creates a 'model/' folder in MLflow run artifacts
+            sk_model=model,
+            artifact_path="model",  # Creates 'model/' folder in MLflow run artifacts
+            signature=signature      # Input/output schema for validation
         )
         
-        # Log feature columns for registry compatibility
+        # Log feature columns for serving consistency
         mlflow.log_text("\n".join(feature_cols), artifact_file="feature_columns.txt")
         
         print("✅ Model and feature metadata saved to MLflow")
+        print(f"💡 Run 'make save-model' to register this model in the registry")
 
         # === Final Performance Summary ===
         print(f"\n⏱️  Performance Summary:")
