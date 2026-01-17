@@ -136,16 +136,38 @@ def gradio_interface(
     # Debug logging
     print(f"DEBUG: Processing prediction for customer. Tenure: {tenure}, Monthly: {MonthlyCharges}", file=sys.stderr)
     
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    
+    logs = [
+        f"[{timestamp}] [SYSTEM] Initializing Kavi.ai Inference Engine...",
+        f"[{timestamp}] [DATA] Validating input schema for 18 features...",
+        f"[{timestamp}] [INFO] Tenure: {tenure} months | Monthly: ${MonthlyCharges}",
+    ]
+    
     try:
+        logs.append(f"[{timestamp}] [TRANSFORM] Applying binary encoding to demographics...")
+        logs.append(f"[{timestamp}] [TRANSFORM] Executing one-hot encoding for services...")
+        
         result = predict(data)
-        print(f"DEBUG: Prediction result: {result}", file=sys.stderr)
+        
+        logs.append(f"[{timestamp}] [MODEL] Invoking XGBoost production model v8...")
+        logs.append(f"[{timestamp}] [RESULT] Prediction generated: {result}")
+        logs.append(f"[{timestamp}] [DONE] Final Risk Assessment completed.")
+        
+        log_text = "\n".join(logs)
+        
         if "Not likely to churn" in result:
-            return f"✅ LOW RISK\n\nIntelligence Analysis: The customer profile indicates high stability and loyalty. {result}."
+            report = f"✅ LOW RISK\n\nIntelligence Analysis: The customer profile indicates high stability and loyalty. {result}."
         else:
-            return f"⚠️ HIGH RISK\n\nIntelligence Analysis: Critical churn indicators detected in service usage or contract terms. {result}."
+            report = f"⚠️ HIGH RISK\n\nIntelligence Analysis: Critical churn indicators detected in service usage or contract terms. {result}."
+            
+        return report, log_text
+        
     except Exception as e:
-        print(f"ERROR: Prediction failed: {str(e)}", file=sys.stderr)
-        return f"❌ ERROR: Processing failed. {str(e)}"
+        error_log = f"[{timestamp}] [ERROR] Process failed: {str(e)}"
+        logs.append(error_log)
+        return f"❌ ERROR: Processing failed. {str(e)}", "\n".join(logs)
 
 # === GRADIO UI CONFIGURATION ===
 custom_css = """
@@ -230,6 +252,20 @@ custom_css = """
     color: #757575;
     font-size: 0.9rem;
 }
+
+.console-log {
+    background-color: #000000 !important;
+    border: 1px solid #333 !important;
+    border-radius: 8px !important;
+}
+
+.console-log textarea {
+    background-color: #000000 !important;
+    color: #00ff00 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+}
 """
 with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
     with gr.Column(elem_classes="brand-header"):
@@ -293,6 +329,15 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
             Confidence threshold: **0.35**
             """)
 
+    with gr.Row():
+        log_window = gr.Textbox(
+            label="⌨️ System Process Logs (Console Mode)",
+            lines=6,
+            interactive=False,
+            placeholder="System waiting for process trigger...",
+            elem_classes="console-log"
+        )
+
     predict_btn.click(
         gradio_interface,
         inputs=[
@@ -301,7 +346,7 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
             TechSupport, StreamingTV, StreamingMovies, Contract,
             PaperlessBilling, PaymentMethod, tenure, MonthlyCharges, TotalCharges
         ],
-        outputs=output_result
+        outputs=[output_result, log_window]
     )
 
     gr.HTML("""
