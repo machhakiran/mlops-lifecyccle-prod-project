@@ -1,4 +1,4 @@
-.PHONY: help install check-data train save-model git-push docker-build docker-push docker-pull docker-inference clean mlflowrun uirun serve mlflow-ui all
+.PHONY: help install check-data train save-model git-push docker-build docker-push docker-pull docker-inference clean stop mlflowrun uirun serve mlflow-ui all
 
 # ============================================================================
 # Configuration
@@ -45,6 +45,10 @@ help:
 	@echo "  $(CYAN)9. docker-push$(NC)      - Push image to Docker Hub"
 	@echo "  $(CYAN)10. docker-pull$(NC)     - Pull image from Docker Hub"
 	@echo "  $(CYAN)11. docker-inference$(NC) - Run containerized inference server"
+	@echo ""
+	@echo "$(BOLD)🛠️  Utilities:$(NC)"
+	@echo "  $(YELLOW)clean$(NC)           - Remove all temporary files & artifacts"
+	@echo "  $(YELLOW)stop$(NC)            - Stop MLflow and UI server processes"
 	@echo ""
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
 
@@ -221,6 +225,12 @@ clean:
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	@rm -rf artifacts/ .gradio/ .pytest_cache/ .coverage htmlcov/ dist/ build/ 2>/dev/null || true
 	@echo "$(GREEN)✅ Workspace cleaned!$(NC)"
+
+stop:
+	@echo "$(RED)🛑 Stopping project services...$(NC)"
+	@pkill -f uvicorn || echo "⚠️  Uvicorn not running"
+	@pkill -f mlflow || echo "⚠️  MLflow not running"
+	@echo "$(GREEN)✅ All services stopped.$(NC)"
 
 all: install check-data train save-model git-push
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
