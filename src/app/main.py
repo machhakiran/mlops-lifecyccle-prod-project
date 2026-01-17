@@ -177,22 +177,17 @@ custom_css = """
 .gradio-container {
     font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
     background: #fdfdfd !important;
+    max-width: 100% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
 }
 
 .brand-header {
     background: #ffffff !important;
-    padding: 1.2rem !important;
+    padding: 1.5rem !important;
     border-bottom: 2px solid #f0f0f0 !important;
     margin-bottom: 1.5rem !important;
     text-align: center !important;
-}
-
-.brand-header img {
-    height: 70px !important;
-    width: auto !important;
-    margin: 0 auto 0.8rem auto !important;
-    display: block !important;
-    filter: none !important;
 }
 
 .header-text {
@@ -200,7 +195,7 @@ custom_css = """
 }
 
 .brand-header h1 {
-    font-size: 1.6rem !important;
+    font-size: 1.8rem !important;
     font-weight: 700 !important;
     color: #1a237e !important;
     margin: 0 !important;
@@ -208,9 +203,9 @@ custom_css = """
 }
 
 .brand-header p {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #546e7a;
-    margin: 0.1rem 0 0 0 !important;
+    margin: 0.2rem 0 0 0 !important;
     font-weight: 500;
 }
 
@@ -267,11 +262,16 @@ custom_css = """
     font-size: 0.85rem !important;
     line-height: 1.4 !important;
 }
+
+.footer-logo {
+    height: 60px !important;
+    width: auto !important;
+    margin-bottom: 1rem;
+}
 """
 with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
     with gr.Column(elem_classes="brand-header"):
         gr.HTML("""
-            <img src="/static/logo.png" alt="Kavi.ai Logo" />
             <div class="header-text">
                 <h1>Telco Customer Churn Prediction</h1>
                 <p>Enterprise Prediction Engine • Powered by Kavi.ai MLOps</p>
@@ -343,6 +343,7 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
 
     gr.HTML("""
         <div class="footer">
+            <img src="/static/logo.png" alt="Kavi.ai Logo" class="footer-logo" />
             <p>Developed with Precision & Scalability by <strong>Kavi.ai</strong></p>
             <p>© 2026 Enterprise Machine Learning Excellence</p>
         </div>
