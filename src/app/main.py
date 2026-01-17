@@ -96,6 +96,10 @@ def get_prediction(data: CustomerData):
 # =================================================== # 
 
 
+# === STATIC FILES ===
+from fastapi.staticfiles import StaticFiles
+app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
+
 # === GRADIO WEB INTERFACE ===
 def gradio_interface(
     gender, Partner, Dependents, PhoneService, MultipleLines,
@@ -105,13 +109,6 @@ def gradio_interface(
 ):
     """
     Gradio interface function that processes form inputs and returns prediction.
-    
-    This function:
-    1. Takes individual form inputs from Gradio UI
-    2. Constructs the data dictionary matching the API schema
-    3. Calls the same inference pipeline used by the API
-    4. Returns user-friendly prediction string
-    
     """
     # Construct data dictionary matching CustomerData schema
     data = {
@@ -130,80 +127,94 @@ def gradio_interface(
         "Contract": Contract,
         "PaperlessBilling": PaperlessBilling,
         "PaymentMethod": PaymentMethod,
-        "tenure": int(tenure),              # Ensure integer type
-        "MonthlyCharges": float(MonthlyCharges),  # Ensure float type
-        "TotalCharges": float(TotalCharges),      # Ensure float type
+        "tenure": int(tenure),
+        "MonthlyCharges": float(MonthlyCharges),
+        "TotalCharges": float(TotalCharges),
     }
     
     # Call same inference pipeline as API endpoint
     result = predict(data)
-    return str(result)  # Return as string for Gradio display
+    
+    # Return formatted result with emoji for better UX
+    if "Not likely to churn" in result:
+        return f"✅ Low Risk: {result}"
+    else:
+        return f"⚠️ High Risk: {result}"
 
 # === GRADIO UI CONFIGURATION ===
-# Build comprehensive Gradio interface with all customer features
-demo = gr.Interface(
-    fn=gradio_interface,
-    inputs=[
-        # Demographics section
-        gr.Dropdown(["Male", "Female"], label="Gender", value="Male"),
-        gr.Dropdown(["Yes", "No"], label="Partner", value="No"),
-        gr.Dropdown(["Yes", "No"], label="Dependents", value="No"),
-        
-        # Phone services section
-        gr.Dropdown(["Yes", "No"], label="Phone Service", value="Yes"),
-        gr.Dropdown(["Yes", "No", "No phone service"], label="Multiple Lines", value="No"),
-        
-        # Internet services section (key churn predictors)
-        gr.Dropdown(["DSL", "Fiber optic", "No"], label="Internet Service", value="Fiber optic"),
-        gr.Dropdown(["Yes", "No", "No internet service"], label="Online Security", value="No"),
-        gr.Dropdown(["Yes", "No", "No internet service"], label="Online Backup", value="No"),
-        gr.Dropdown(["Yes", "No", "No internet service"], label="Device Protection", value="No"),
-        gr.Dropdown(["Yes", "No", "No internet service"], label="Tech Support", value="No"),
-        gr.Dropdown(["Yes", "No", "No internet service"], label="Streaming TV", value="Yes"),
-        gr.Dropdown(["Yes", "No", "No internet service"], label="Streaming Movies", value="Yes"),
-        
-        # Contract and billing section (major churn factors)
-        gr.Dropdown(["Month-to-month", "One year", "Two year"], label="Contract", value="Month-to-month"),
-        gr.Dropdown(["Yes", "No"], label="Paperless Billing", value="Yes"),
-        gr.Dropdown([
-            "Electronic check", "Mailed check",
-            "Bank transfer (automatic)", "Credit card (automatic)"
-        ], label="Payment Method", value="Electronic check"),
-        
-        # Numeric features (important for churn prediction)
-        gr.Number(label="Tenure (months)", value=1, minimum=0, maximum=100),
-        gr.Number(label="Monthly Charges ($)", value=85.0, minimum=0, maximum=200),
-        gr.Number(label="Total Charges ($)", value=85.0, minimum=0, maximum=10000),
-    ],
-    outputs=gr.Textbox(label="Churn Prediction", lines=2),
-    title="🔮 Telco Customer Churn Predictor",
-    description="""
-    **Predict customer churn probability using machine learning**
+# Custom CSS for Kavi.ai branding
+custom_css = """
+.gradio-container {background-color: #f8f9fa}
+.brand-header {text-align: center; margin-bottom: 20px;}
+.brand-header img {max-width: 150px; margin: 0 auto;}
+.brand-header h1 {color: #4a148c; margin-top: 10px; font-weight: bold;}
+.predict-btn {background: linear-gradient(90deg, #4a148c 0%, #01579b 100%); color: white; border: none;}
+"""
+
+with gr.Blocks(theme=gr.themes.Soft(primary_hue="indigo"), css=custom_css, title="Kavi.ai Churn Predictor") as demo:
+    with gr.Column(elem_classes="brand-header"):
+        gr.HTML("""
+            <div class="brand-header">
+                <img src="/static/logo.png" alt="Kavi.ai Logo" />
+                <h1>Kavi.ai Operations</h1>
+                <p>Telco Customer Churn Prediction System</p>
+            </div>
+        """)
     
-    Fill in the customer details below to get a churn prediction. The model uses XGBoost trained on 
-    historical telecom customer data to identify customers at risk of churning.
+    with gr.Row():
+        with gr.Column(scale=1):
+            with gr.Accordion("👤 Customer Demographics", open=True):
+                gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Male")
+                Partner = gr.Dropdown(["Yes", "No"], label="Partner", value="No")
+                Dependents = gr.Dropdown(["Yes", "No"], label="Dependents", value="No")
+                tenure = gr.Slider(label="Tenure (months)", value=1, minimum=0, maximum=100, step=1)
+        
+        with gr.Column(scale=1):
+            with gr.Accordion("📡 Services & Usage", open=True):
+                InternetService = gr.Dropdown(["DSL", "Fiber optic", "No"], label="Internet Service", value="Fiber optic")
+                PhoneService = gr.Dropdown(["Yes", "No"], label="Phone Service", value="Yes")
+                MultipleLines = gr.Dropdown(["Yes", "No", "No phone service"], label="Multiple Lines", value="No")
+                StreamingTV = gr.Dropdown(["Yes", "No", "No internet service"], label="Streaming TV", value="Yes")
+                StreamingMovies = gr.Dropdown(["Yes", "No", "No internet service"], label="Streaming Movies", value="Yes")
+
+    with gr.Row():
+        with gr.Column(scale=1):
+            with gr.Accordion("🛡️ Support & Security", open=False):
+                OnlineSecurity = gr.Dropdown(["Yes", "No", "No internet service"], label="Online Security", value="No")
+                OnlineBackup = gr.Dropdown(["Yes", "No", "No internet service"], label="Online Backup", value="No")
+                DeviceProtection = gr.Dropdown(["Yes", "No", "No internet service"], label="Device Protection", value="No")
+                TechSupport = gr.Dropdown(["Yes", "No", "No internet service"], label="Tech Support", value="No")
+
+        with gr.Column(scale=1):
+            with gr.Accordion("💳 Billing & Contract", open=True):
+                Contract = gr.Dropdown(["Month-to-month", "One year", "Two year"], label="Contract", value="Month-to-month")
+                PaperlessBilling = gr.Dropdown(["Yes", "No"], label="Paperless Billing", value="Yes")
+                PaymentMethod = gr.Dropdown(["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], label="Payment Method", value="Electronic check")
+                MonthlyCharges = gr.Number(label="Monthly Charges ($)", value=85.0)
+                TotalCharges = gr.Number(label="Total Charges ($)", value=85.0)
+
+    with gr.Row():
+        predict_btn = gr.Button("🔮 Predict Churn Risk", variant="primary", elem_classes="predict-btn")
+        
+    output_result = gr.Textbox(label="Prediction Result", lines=1, interactive=False)
     
-    💡 **Tip**: Month-to-month contracts with fiber optic internet and electronic check payments 
-    tend to have higher churn rates.
-    """,
-    examples=[
-        # High churn risk example
-        ["Female", "No", "No", "Yes", "No", "Fiber optic", "No", "No", "No", 
-         "No", "Yes", "Yes", "Month-to-month", "Yes", "Electronic check", 
-         1, 85.0, 85.0],
-        # Low churn risk example  
-        ["Male", "Yes", "Yes", "Yes", "Yes", "DSL", "Yes", "Yes", "Yes",
-         "Yes", "No", "No", "Two year", "No", "Credit card (automatic)",
-         60, 45.0, 2700.0]
-    ],
-    theme=gr.themes.Soft()  # Professional appearance
-)
+    predict_btn.click(
+        gradio_interface,
+        inputs=[
+            gender, Partner, Dependents, PhoneService, MultipleLines,
+            InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
+            TechSupport, StreamingTV, StreamingMovies, Contract,
+            PaperlessBilling, PaymentMethod, tenure, MonthlyCharges, TotalCharges
+        ],
+        outputs=output_result
+    )
+
+    gr.Markdown("### 💡 Powered by Kavi.ai MLOps Pipeline")
 
 # === MOUNT GRADIO UI INTO FASTAPI ===
-# This creates the /ui endpoint that serves the Gradio interface
-# IMPORTANT: This must be the final line to properly integrate Gradio with FastAPI
 app = gr.mount_gradio_app(
-    app,           # FastAPI application instance
-    demo,          # Gradio interface
-    path="/ui"     # URL path where Gradio will be accessible
+    app,
+    demo,
+    path="/ui",
+    allowed_paths=["src/app/static"]
 )

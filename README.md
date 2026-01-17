@@ -10,17 +10,9 @@
 
 A production-ready machine learning solution for predicting customer churn in the telecom industry using XGBoost, FastAPI, and MLflow.
 
-## Table of Contents
+**Repository:** [https://github.com/machhakiran/mlops-lifecyccle-prod-project](https://github.com/machhakiran/mlops-lifecyccle-prod-project)
 
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
+
 
 ## Features
 
@@ -29,7 +21,7 @@ A production-ready machine learning solution for predicting customer churn in th
 - ✅ **Model Training** - XGBoost with optimized hyperparameters
 - ✅ **Experiment Tracking** - MLflow for metrics and model versioning
 - ✅ **REST API** - FastAPI with automatic OpenAPI documentation
-- ✅ **Web UI** - Gradio interface for interactive predictions
+- ✅ **Web UI** - Premium Kavi.ai branded interface for interactive predictions
 - ✅ **Containerization** - Docker for consistent deployment
 - ✅ **CI/CD** - GitHub Actions for automated builds
 
@@ -75,44 +67,19 @@ graph TD
     style Mon fill:#ffebee,stroke:#b71c1c
 ```
 
-## Quick Start
+## Setup & Installation
 
-```bash
-# 1. Install dependencies
-make install
-
-# 2. Verify data exists
-make check-data
-
-# 3. Train model
-make train
-
-# 4. Save model to MLflow registry
-make save-model
-
-# 5. Start API server
-make serve
-```
-
-**Access:**
-- API: http://localhost:8000
-- Docs: http://localhost:8000/docs
-- UI: http://localhost:8000/ui
-
-## Installation
-
-### Prerequisites
-
+### 1. Verification of Prerequisites
+Ensure you have the following installed:
 - Python 3.11+
-- Docker (optional)
-- Git (optional)
+- Docker (optional but recommended)
+- Git
 
-### Setup
-
+### 2. Clone & Install
 ```bash
 # Clone repository
-git clone <repository-url>
-cd Telco-Customer-Churn-ML
+git clone https://github.com/machhakiran/mlops-lifecyccle-prod-project
+cd mlops-lifecyccle-prod-project
 
 # Create virtual environment
 python -m venv venv
@@ -121,44 +88,66 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 make install
 
-# Verify data exists
+# Verify data integrity
 make check-data
 ```
 
+### 3. Verification Full URL
+After starting the server (`make serve`), verify the endpoints using the full URLs below:
+
+**Kavi.ai UI (Interactive):**
+- **URL:** `http://localhost:8000/ui`
+- **Description:** Premium branded interface for real-time predictions.
+
+**Inference Endpoint:**
+- **URL:** `http://localhost:8000/predict`
+- **Method:** `POST`
+- **Docs:** `http://localhost:8000/docs`
+
+**Model Evaluation (MLflow):**
+- **URL:** `http://localhost:5000` (MLflow UI)
+- **Curls for Testing:**
+    ```bash
+    curl -X POST "http://localhost:8000/predict" \
+      -H "Content-Type: application/json" \
+      -d '{"gender": "Male", "Partner": "Yes", "Dependents": "No", "PhoneService": "Yes", "MultipleLines": "No", "InternetService": "DSL", "OnlineSecurity": "Yes", "OnlineBackup": "No", "DeviceProtection": "No", "TechSupport": "No", "StreamingTV": "No", "StreamingMovies": "No", "Contract": "Two year", "PaperlessBilling": "No", "PaymentMethod": "Mailed check", "tenure": 72, "MonthlyCharges": 20.0, "TotalCharges": 1440.0}'
+    ```
+
 ## Usage
 
-### Training Pipeline
+### Full MLOps Workflow
+Run the following commands in the sequence below:
 
 ```bash
-# Train model (saves to MLflow)
+# 1. Install all dependencies
+make install
+
+# 2. Verify data integrity
+make check-data
+
+# 3. Start MLflow Tracking Server (Open in new terminal)
+make mlflowrun
+# View at: http://localhost:5000
+
+# 4. Train XGBoost model & log to MLflow
 make train
 
-# Evaluate model (logs metrics to MLflow)
-make eval
-
-# Save model to registry
+# 5. Register best model in MLflow Registry
 make save-model
 
-# Promote model to Production
-make promote-model
+# 6. Start Kavi.ai App for Local Testing (Open in new terminal)
+make uirun
+# View at: http://localhost:8000/ui
+
+# 7. Commit & Push to GitHub
+make git-push
 ```
 
-### API Server
+### Utilities
 
 ```bash
-# Start server locally
-make serve
-
-# Or with uvicorn directly
-uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### MLflow
-
-```bash
-# View experiments
-make mlflow-ui
-# Open http://localhost:5000
+# Clean workspace
+make clean
 ```
 
 ## Project Structure
@@ -166,25 +155,24 @@ make mlflow-ui
 ```
 telco-customer-churn-ml/
 ├── src/                    # Source code
-│   ├── app/               # FastAPI application
+│   ├── app/               # FastAPI application & Gradio UI
 │   ├── data/              # Data loading & preprocessing
 │   ├── features/          # Feature engineering
-│   ├── serving/           # Model serving
-│   └── utils/             # Utilities
-├── scripts/                # Pipeline scripts
-│   ├── run_pipeline.py    # Training pipeline
-│   ├── evaluate_model.py # Model evaluation
-│   ├── promote_model.py   # Model promotion
-│   └── get_latest_run.py  # MLflow utilities
-├── tests/                  # Test suite
-├── data/                   # Data directory
-│   ├── raw/              # Raw data
-│   └── processed/       # Processed data
-├── config/                # Configuration files
-├── notebooks/             # Jupyter notebooks
-├── Makefile              # Workflow commands
-├── Dockerfile            # Container configuration
-└── requirements.txt      # Dependencies
+│   ├── serving/           # Model serving logic
+│   └── utils/             # Utilities (Validation, etc.)
+├── scripts/                # Pipeline orchestration scripts
+│   ├── run_pipeline.py    # Main training pipeline
+│   ├── promote_model.py   # MLflow model registry logic
+│   └── get_latest_run.py  # MLflow helper utilities
+├── tests/                  # Integration and Unit tests
+├── data/                   # Data versioning directory
+│   ├── raw/              # Raw CSV data
+│   └── processed/       # Preprocessed datasets
+├── config/                # Environment configuration
+├── notebooks/             # Exploratory Data Analysis
+├── Makefile              # MLOps workflow automation
+├── Dockerfile            # Containerization manifest
+└── requirements.txt      # Project dependencies
 ```
 
 ## API Documentation
@@ -230,16 +218,21 @@ curl -X POST "http://localhost:8000/predict" \
 
 **Docker Hub:** `machhakiran0108/telco-churn-ml:latest`
 
+### Sequence Started (Post-Code Push)
+
 ```bash
-# Build image
+# 8. Build production Docker image
 make docker-build
 
-# Push to Docker Hub
+# 9. Push image to Docker Hub
 make docker-push
 
-# Pull and run
+# 10. Pull image (on deployment server)
 make docker-pull
+
+# 11. Run containerized inference server
 make docker-inference
+# Verifies: http://localhost:8000/ui
 ```
 
 ### GitHub Actions
@@ -266,3 +259,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub:** [machhakiran](https://github.com/machhakiran)
 - **Docker Hub:** [machhakiran0108](https://hub.docker.com/u/machhakiran0108)
+
+---
+
+## Author
+
+**Machha Kiran**
+*MLOps Engineer | AI Solutions Architect*
+
+---
+© 2026 Kavi.ai - Accelerated Machine Learning Operations
