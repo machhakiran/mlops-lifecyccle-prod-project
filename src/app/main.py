@@ -279,7 +279,7 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
         """)
     
     with gr.Row():
-        with gr.Column(scale=4):
+        with gr.Column(scale=3):
             with gr.Row():
                 with gr.Column(elem_classes="input-section"):
                     gr.Markdown("### 👤 Profile")
@@ -314,21 +314,23 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
                         MonthlyCharges = gr.Number(label="Monthly ($)", value=75.0, precision=2)
                         TotalCharges = gr.Number(label="Total ($)", value=900.0, precision=2)
 
-        with gr.Column(scale=2):
+        with gr.Column(scale=1):
             gr.Markdown("### 📈 Risk Report")
             predict_btn = gr.Button("🔍 ANALYZE RISK", variant="primary", elem_classes="predict-btn")
             output_result = gr.Textbox(
                 label="Assessment", 
-                lines=5, 
+                lines=12, 
                 interactive=False, 
                 elem_classes="output-box"
             )
-            log_window = gr.Textbox(
-                label="⌨️ Process Logs",
-                lines=8,
-                interactive=False,
-                elem_classes="console-log"
-            )
+
+    with gr.Row():
+        log_window = gr.Textbox(
+            label="⌨️ Process Logs",
+            lines=6,
+            interactive=False,
+            elem_classes="console-log"
+        )
 
     predict_btn.click(
         gradio_interface,
