@@ -25,46 +25,58 @@ A production-ready machine learning solution for predicting customer churn in th
 - ✅ **Containerization** - Docker for consistent deployment
 - ✅ **CI/CD** - GitHub Actions for automated builds
 
-## MLOps Lifecycle
+## 🚀 MLOps Lifecycle: Path to Production
+
+This project follows a strict MLOps pipeline to ensure high-quality model deployment. The diagram below illustrates how code and data evolve from local development to production.
 
 ```mermaid
-graph TD
-    subgraph "Phase 1: Environment & Initialization"
-        S1[Step 1: make install] -->|Setup Venv| S2[Step 2: make check-data]
-        S2 -->|Great Expectations| VAL{Valid?}
-        VAL -->|Yes| S3[Step 3: make mlflowrun]
+graph LR
+    %% Styles
+    classDef phasestyle fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef stepstyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,rx:5;
+    classDef decisionstyle fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,rx:5;
+    classDef artifactstyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px,rx:5;
+
+    subgraph "Phase 1: Local Dev & Validation"
+        direction TB
+        S1[make install/check-data]:::stepstyle --> val{Data Valid?}:::decisionstyle
+        val -->|Yes| S2[make train]:::stepstyle
+        val -->|No| Fix[Fix Data]
     end
 
-    subgraph "Phase 2: Training & Performance"
-        S3 -->|Tracking UI| S4[Step 4: make train]
-        S4 -->|XGBoost + Metrics| LOG[Log to MLflow]
-        LOG --> EVAL[Performance Analysis]
+    subgraph "Phase 2: Experimentation & Training"
+        direction TB
+        S2 -->|Log Metrics| MLflow[MLflow Tracking]:::artifactstyle
+        MLflow --> Eval{Performance OK?}:::decisionstyle
     end
 
-    subgraph "Phase 3: Governance & Registry"
-        EVAL --> S5[Step 5: make save-model]
-        S5 -->|Automatic PRD Tag| REG[MLflow Model Registry]
+    subgraph "Phase 3: Model Registry"
+        direction TB
+        Eval -->|Yes| S3[make save-model]:::stepstyle
+        S3 --> Reg[Model Registry]:::artifactstyle
+        Reg -->|Tag: Production| ProdModel[Production Model]:::artifactstyle
     end
 
-    subgraph "Phase 4: Serving & Deployment"
-        REG --> S6[Step 6: make uirun]
-        S6 -->|FastAPI + Gradio| APP[Kavi.ai Web UI]
-        APP --> S7[Step 7: make git-push]
-        S7 -->|CI/CD Sync| VCS[Git Repository]
+    subgraph "Phase 4: CI/CD & Deployment"
+        direction TB
+        ProdModel --> S4[make git-push]:::stepstyle
+        S4 -->|Trigger CI| GH[GitHub Actions]:::stepstyle
+        GH -->|Build| Docker[make docker-build]:::stepstyle
+        Docker -->|Push| Hub[Docker Hub]:::artifactstyle
     end
 
-    subgraph "Phase 5: Production (Docker)"
-        S7 -.->|Trigger| D1[Step 8: make docker-build]
-        D1 --> D2[Step 9: make docker-push]
-    end
-
-    style S1 fill:#e8eaf6,stroke:#1a237e,stroke-width:2px
-    style S4 fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px
-    style S5 fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style S6 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style APP fill:#1a237e,color:#fff
-    style REG fill:#e65100,color:#fff
+    style "Phase 1: Local Dev & Validation" fill:#f5f5f5,stroke:#9e9e9e
+    style "Phase 2: Experimentation & Training" fill:#f5f5f5,stroke:#9e9e9e
+    style "Phase 3: Model Registry" fill:#f5f5f5,stroke:#9e9e9e
+    style "Phase 4: CI/CD & Deployment" fill:#f5f5f5,stroke:#9e9e9e
 ```
+
+### Note on Production Promotion
+1.  **Data Validation**: Great Expectations ensures no bad data enters the training pipeline.
+2.  **Training & Evaluation**: XGBoost trains the model. Metrics are logged to MLflow.
+3.  **Registry**: Only models that pass manual or automated evaluation are promoted to the **MLflow Registry**.
+4.  **Containerization**: **Docker** ensures the model runs the same way in production as it does locally.
+5.  **CI/CD**: Pushing to `main` triggers valid build and test pipelines.
 
 ## Setup & Installation
 
