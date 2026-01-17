@@ -137,33 +137,40 @@ custom_css = """
 }
 
 .brand-header {
-    background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
-    padding: 2.5rem 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    color: white;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: #ffffff !important;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .brand-header img {
-    height: 60px !important;
+    height: 50px !important;
     width: auto !important;
-    margin-bottom: 1rem;
-    filter: brightness(0) invert(1);
-    opacity: 0.95;
+    margin: 0 !important;
+    filter: none !important; /* Keep original brand colors */
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
 }
 
 .brand-header h1 {
-    font-size: 2.2rem !important;
+    font-size: 1.8rem !important;
     font-weight: 700 !important;
-    letter-spacing: -0.5px;
+    color: #1a237e !important;
     margin: 0 !important;
+    letter-spacing: -0.5px;
 }
 
 .brand-header p {
-    font-size: 1.1rem;
-    opacity: 0.85;
-    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: #546e7a;
+    margin: 0.2rem 0 0 0 !important;
+    font-weight: 500;
 }
 
 .predict-btn {
@@ -208,12 +215,12 @@ custom_css = """
 """
 
 with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
-    with gr.Column(elem_classes="brand-header"):
+    with gr.Row(elem_classes="brand-header"):
         gr.HTML("""
-            <div style="text-align: center;">
-                <img src="/static/logo.png" alt="Kavi.ai Logo" style="display: block; margin: 0 auto;"/>
+            <img src="/static/logo.png" alt="Kavi.ai Logo" />
+            <div class="header-text">
                 <h1>Customer Churn Intelligence</h1>
-                <p>Enterprise Prediction Engine powered by Kavi.ai MLOps</p>
+                <p>Enterprise Prediction Engine • Powered by Kavi.ai MLOps</p>
             </div>
         """)
     
