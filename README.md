@@ -1,5 +1,10 @@
 # Telco Customer Churn Prediction
 
+<div align="center">
+  <img src="logo.png" alt="Kavi.ai Logo" width="200"/>
+  <h3>Powered by Kavi.ai</h3>
+</div>
+
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -27,6 +32,48 @@ A production-ready machine learning solution for predicting customer churn in th
 - ✅ **Web UI** - Gradio interface for interactive predictions
 - ✅ **Containerization** - Docker for consistent deployment
 - ✅ **CI/CD** - GitHub Actions for automated builds
+
+## MLOps Lifecycle
+
+```mermaid
+graph TD
+    subgraph "1. Development & Experimentation"
+        DS[Data Scientist] -->|Commit Code| Git[Git Repository]
+        DS -->|Run Experiments| Exp[MLflow Tracking]
+        EDA[Exploratory Data Analysis] --> Feature[Feature Engineering]
+        Feature --> Exp
+    end
+
+    subgraph "2. CI/CD Pipeline (GitHub Actions)"
+        Git -->|Trigger| CI[CI: Lint & Unit Tests]
+        CI -->|Success| Build[Build Docker Image]
+        Build --> TrainOps[Automated Training Pipeline]
+        TrainOps -->|Log Artifacts| Eval[Model Evaluation]
+    end
+
+    subgraph "3. Model Governance (MLflow)"
+        Eval -->|Metrics > Threshold| Reg[Register Model]
+        Reg -->|Versioning| MR[Model Registry]
+        MR -->|Manual/Auto Approval| Staging[Staging Tag]
+        Staging -->|Integration Tests| Prod[Production Tag]
+    end
+
+    subgraph "4. Deployment & Operations"
+        Prod -->|CD Trigger| Deploy[Deploy to K8s/Docker]
+        Deploy -->|Serve| API[FastAPI Inference]
+        API -->|Real-time| Mon[Monitoring & Drift Detection]
+        Mon -->|Data Drift| Alert[Trigger Retraining]
+    end
+
+    Alert -.->|Feedback Loop| DS
+
+    style DS fill:#e1f5fe,stroke:#01579b
+    style Git fill:#f3e5f5,stroke:#4a148c
+    style TrainOps fill:#e8f5e9,stroke:#1b5e20
+    style MR fill:#fff3e0,stroke:#e65100
+    style API fill:#e0f7fa,stroke:#006064
+    style Mon fill:#ffebee,stroke:#b71c1c
+```
 
 ## Quick Start
 
