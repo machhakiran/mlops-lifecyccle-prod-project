@@ -7,7 +7,7 @@ WORKDIR /app
 # 3. Copy only dependency file first (for Docker caching)
 COPY requirements.txt .
 
-# 4. Install Python dependencies (add curl if you use MLflow local tracking URI)
+# 4. Install Python dependencies
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -15,23 +15,18 @@ RUN pip install --upgrade pip \
 # 5. Copy the entire project into the image
 COPY . .
 
-# Explicitly copy model (in case .dockerignore excluded mlruns)
-# NOTE: destination changed to /app/src/serving/model to match inference.py's path
-COPY src/serving/model /app/src/serving/model
+# 6. Copy Model Artifacts (Prepared by prep script)
+# This directory 'docker_model_context' must be created before build
+COPY docker_model_context /app/model_artifacts
 
-# Copy MLflow run (artifacts + metadata) to the flat /app/model convenience path
-COPY src/serving/model/3b1a41221fc44548aed629fa42b762e0/artifacts/model /app/model
-COPY src/serving/model/3b1a41221fc44548aed629fa42b762e0/artifacts/feature_columns.txt /app/model/feature_columns.txt
-COPY src/serving/model/3b1a41221fc44548aed629fa42b762e0/artifacts/preprocessing.pkl /app/model/preprocessing.pkl
+# 7. Configure Inference to use Local Model
+# This matches the new logic in src/serving/inference.py
+ENV MODEL_DIR_PATH=/app/model_artifacts
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 
-# make "serving" and "app" importable without the "src." prefix
-# ensures logs are shown in real-time (no buffering).
-# lets you import modules using from app... instead of from src.app....
-ENV PYTHONUNBUFFERED=1 \ 
-    PYTHONPATH=/app/src
-
-# 6. Expose FastAPI port
+# 8. Expose FastAPI port
 EXPOSE 8000
 
-# 7. Run the FastAPI app using uvicorn (change path if needed)
+# 9. Run the FastAPI app
 CMD ["python", "-m", "uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

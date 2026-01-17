@@ -19,7 +19,7 @@ CRITICAL PATTERN: Training/Serving Consistency
 - Handles missing/new categorical values gracefully
 
 Production Deployment:
-- MODEL_DIR points to containerized model artifacts
+- MODEL_DIR points to containerized model artifacts (via MODEL_DIR_PATH env var)
 - Feature schema loaded from training-time artifacts
 - Optimized for single-row inference (real-time serving)
 """
@@ -28,64 +28,109 @@ import os
 import sys
 import pandas as pd
 import mlflow
+import glob
 
 # === MODEL LOADING CONFIGURATION ===
 MODEL_NAME = "telco-churn-model"
 MODEL_STAGE = "Production"
 
-# Initialize MLflow tracking
-import mlflow
-from mlflow.tracking import MlflowClient
-tracking_uri = f"file://{os.getcwd()}/mlruns"
-mlflow.set_tracking_uri(tracking_uri)
-client = MlflowClient(tracking_uri=tracking_uri)
-
+# Initialize MLflow tracking match
+# Note: In container, this might fail if mlruns doesn't exist, but we cover that below.
 try:
-    # 1. Find the Production version in the registry
-    versions = client.get_latest_versions(MODEL_NAME, [MODEL_STAGE])
-    if not versions:
-        raise Exception(f"No model version found for {MODEL_NAME} in {MODEL_STAGE} stage")
-    
-    prod_version = versions[0]
-    run_id = prod_version.run_id
-    print(f"📦 Found Production model (v{prod_version.version}) from run: {run_id}")
-    
-    # 2. Download artifacts: the model folder AND the feature metadata
-    # We download the model folder specifically for pyfunc loading
-    model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
-    model = mlflow.pyfunc.load_model(model_uri)
-    
-    # We also need the feature columns text file which is at the run's root artifacts
-    # download_artifacts returns the local path to the downloaded file/folder
-    MODEL_DIR = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="model")
-    FEATURE_FILE = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="feature_columns.txt")
-    
-    print(f"✅ Model and features loaded from run {run_id}")
+    import mlflow
+    from mlflow.tracking import MlflowClient
+    tracking_uri = f"file://{os.getcwd()}/mlruns"
+    # Only set if directory exists to avoid noise in logs
+    if os.path.exists(os.path.join(os.getcwd(), "mlruns")):
+        mlflow.set_tracking_uri(tracking_uri)
+except:
+    pass
 
-except Exception as registry_error:
-    print(f"⚠️ Registry load failed: {registry_error}. Falling back to local scans...")
+MODEL_DIR = None
+FEATURE_FILE = None
+model = None
+
+# === 0. Check for Local Model (Docker/Production Mode) ===
+# This is the PRIMARY path for the Docker container
+model_dir_env = os.environ.get("MODEL_DIR_PATH")
+
+if model_dir_env and os.path.exists(model_dir_env):
+    print(f"📦 Loading model from environment path: {model_dir_env}")
+    
+    # Determine exact model path (handle nesting)
+    if os.path.exists(os.path.join(model_dir_env, "model", "MLmodel")):
+        MODEL_DIR = os.path.join(model_dir_env, "model")
+    elif os.path.exists(os.path.join(model_dir_env, "MLmodel")):
+         MODEL_DIR = model_dir_env
+    else:
+         # Fallback: Assume the env var points to the model dir itself
+         MODEL_DIR = model_dir_env
+
     try:
-        import glob
-        # Try to find any local model artifact
-        model_paths = glob.glob("./mlruns/*/*/artifacts/model") or glob.glob("./mlruns/*/*/models/*/artifacts")
-        if not model_paths:
-            raise Exception("No local model artifacts found.")
-        
-        MODEL_DIR = max(model_paths, key=os.path.getmtime)
         model = mlflow.pyfunc.load_model(MODEL_DIR)
+        print(f"✅ Loaded local model from {MODEL_DIR}")
         
-        # Look for feature_columns.txt in same or parent dir
-        FEATURE_FILE = os.path.join(MODEL_DIR, "feature_columns.txt")
-        if not os.path.exists(FEATURE_FILE):
-            FEATURE_FILE = os.path.join(os.path.dirname(MODEL_DIR), "feature_columns.txt")
-            
-        if not os.path.exists(FEATURE_FILE):
-             raise Exception("feature_columns.txt not found locally.")
+        # Locate feature file
+        if os.path.exists(os.path.join(model_dir_env, "feature_columns.txt")):
+            FEATURE_FILE = os.path.join(model_dir_env, "feature_columns.txt")
+        elif os.path.exists(os.path.join(MODEL_DIR, "feature_columns.txt")):
+            FEATURE_FILE = os.path.join(MODEL_DIR, "feature_columns.txt")
+        else:
+             # Try parent of model dir
+             FEATURE_FILE = os.path.join(os.path.dirname(MODEL_DIR), "feature_columns.txt")
              
-        print(f"✅ Fallback: Loaded model from {MODEL_DIR}")
-    except Exception as fallback_error:
-        print(f"❌ CRITICAL ERROR: Could not load model. Run 'make train' then 'make save-model'.")
-        raise fallback_error
+        if not FEATURE_FILE or not os.path.exists(FEATURE_FILE):
+             print(f"⚠️  Feature file not found near model. Checking recursive...")
+             # Just fail or assume default?
+             pass
+    except Exception as e:
+        print(f"❌ Failed to load local model: {e}")
+
+# === 1. Fallback to Registry / MLflow (Development Mode) ===
+if model is None:
+    try:
+        client = MlflowClient()
+        # Find the Production version in the registry
+        versions = client.get_latest_versions(MODEL_NAME, [MODEL_STAGE])
+        if not versions:
+            raise Exception(f"No model version found for {MODEL_NAME} in {MODEL_STAGE} stage")
+        
+        prod_version = versions[0]
+        run_id = prod_version.run_id
+        print(f"📦 Found Production model (v{prod_version.version}) from run: {run_id}")
+        
+        # Download artifacts
+        model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
+        model = mlflow.pyfunc.load_model(model_uri)
+        
+        MODEL_DIR = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="model")
+        FEATURE_FILE = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="feature_columns.txt")
+        
+        print(f"✅ Model and features loaded from run {run_id}")
+    
+    except Exception as registry_error:
+        print(f"⚠️ Registry load failed: {registry_error}. Falling back to local scans...")
+        try:
+            # Try to find any local model artifact
+            model_paths = glob.glob("./mlruns/*/*/artifacts/model") or glob.glob("./mlruns/*/*/models/*/artifacts")
+            if not model_paths:
+                raise Exception("No local model artifacts found.")
+            
+            MODEL_DIR = max(model_paths, key=os.path.getmtime)
+            model = mlflow.pyfunc.load_model(MODEL_DIR)
+            
+            # Look for feature_columns.txt in same or parent dir
+            FEATURE_FILE = os.path.join(MODEL_DIR, "feature_columns.txt")
+            if not os.path.exists(FEATURE_FILE):
+                FEATURE_FILE = os.path.join(os.path.dirname(MODEL_DIR), "feature_columns.txt")
+                
+            if not os.path.exists(FEATURE_FILE):
+                 raise Exception("feature_columns.txt not found locally.")
+                 
+            print(f"✅ Fallback: Loaded model from {MODEL_DIR}")
+        except Exception as fallback_error:
+            print(f"❌ CRITICAL ERROR: Could not load model. Run 'make train' then 'make save-model'.")
+            raise fallback_error
 
 # === FEATURE SCHEMA LOADING ===
 try:
@@ -227,7 +272,6 @@ def predict(input_dict: dict) -> str:
     df_enc = _serve_transform(df)
     
     # === STEP 3: Generate Model Prediction ===
-    # === STEP 3: Generate Model Prediction ===
     try:
         prob_churn = -1.0
         
@@ -260,8 +304,6 @@ def predict(input_dict: dict) -> str:
         # If we got a valid probability, use it
         if prob_churn >= 0.0:
             # Enforce consistency: If prob > 0.5 but result is 0 (rare), trust prob?
-            # Actually, let's just use prob for scoring.
-            # Enterprise Usage: Threshold might be custom.
             pass 
         else:
             # Fallback: Create synthetic score based on class

@@ -175,6 +175,8 @@ docker-build:
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
 	@echo "$(BOLD)🐳 Step 8: Building Docker Image...$(NC)"
 	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(CYAN)Preparing build context (artifacts)...$(NC)"
+	@$(PYTHON) scripts/prepare_docker_context.py --experiment $(EXPERIMENT_NAME) --output docker_model_context
 	@echo "$(CYAN)Image: $(DOCKER_HUB_USER)/$(DOCKER_IMAGE):$(DOCKER_TAG)$(NC)"
 	@docker build -t $(DOCKER_HUB_USER)/$(DOCKER_IMAGE):$(DOCKER_TAG) .
 	@docker tag $(DOCKER_HUB_USER)/$(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_IMAGE):$(DOCKER_TAG)
