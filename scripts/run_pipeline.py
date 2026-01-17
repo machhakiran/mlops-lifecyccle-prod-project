@@ -235,8 +235,8 @@ if __name__ == "__main__":
 """
 # Use this below to run the pipeline:
 
-python scripts/run_pipeline.py \                                            
-    --input data/raw/Telco-Customer-Churn.csv \
+python scripts/run_pipeline.py \\
+    --input data/raw/Telco-Customer-Churn.csv \\
     --target Churn
 
 """

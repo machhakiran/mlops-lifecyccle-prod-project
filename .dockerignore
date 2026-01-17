@@ -1,2 +1,83 @@
-data/
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+!README.md
+LICENSE
+CHANGELOG.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+mlops/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
 notebooks/
+
+# MLflow (not needed in container)
+mlruns/
+.mlflow/
+
+# Data (not needed in container)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!env.example
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Artifacts (will be copied from model registry)
+artifacts/
+
+# Models (will be loaded from MLflow or copied separately)
+models/registry/
