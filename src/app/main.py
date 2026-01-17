@@ -101,30 +101,50 @@ from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 
 # === GRADIO WEB INTERFACE ===
-def gradio_interface(*args):
+import sys
+
+def gradio_interface(
+    gender, Partner, Dependents, PhoneService, MultipleLines,
+    InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
+    TechSupport, StreamingTV, StreamingMovies, Contract,
+    PaperlessBilling, PaymentMethod, tenure, MonthlyCharges, TotalCharges
+):
     """
     Gradio interface function that processes form inputs and returns prediction.
     """
-    keys = [
-        "gender", "Partner", "Dependents", "PhoneService", "MultipleLines",
-        "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection",
-        "TechSupport", "StreamingTV", "StreamingMovies", "Contract",
-        "PaperlessBilling", "PaymentMethod", "tenure", "MonthlyCharges", "TotalCharges"
-    ]
-    data = dict(zip(keys, args))
+    data = {
+        "gender": gender,
+        "Partner": Partner,
+        "Dependents": Dependents,
+        "PhoneService": PhoneService,
+        "MultipleLines": MultipleLines,
+        "InternetService": InternetService,
+        "OnlineSecurity": OnlineSecurity,
+        "OnlineBackup": OnlineBackup,
+        "DeviceProtection": DeviceProtection,
+        "TechSupport": TechSupport,
+        "StreamingTV": StreamingTV,
+        "StreamingMovies": StreamingMovies,
+        "Contract": Contract,
+        "PaperlessBilling": PaperlessBilling,
+        "PaymentMethod": PaymentMethod,
+        "tenure": int(tenure),
+        "MonthlyCharges": float(MonthlyCharges),
+        "TotalCharges": float(TotalCharges),
+    }
     
-    # Cast numeric types correctly
-    data["tenure"] = int(data["tenure"])
-    data["MonthlyCharges"] = float(data["MonthlyCharges"])
-    data["TotalCharges"] = float(data["TotalCharges"])
+    # Debug logging
+    print(f"DEBUG: Processing prediction for customer. Tenure: {tenure}, Monthly: {MonthlyCharges}", file=sys.stderr)
     
     try:
         result = predict(data)
+        print(f"DEBUG: Prediction result: {result}", file=sys.stderr)
         if "Not likely to churn" in result:
             return f"✅ LOW RISK\n\nIntelligence Analysis: The customer profile indicates high stability and loyalty. {result}."
         else:
             return f"⚠️ HIGH RISK\n\nIntelligence Analysis: Critical churn indicators detected in service usage or contract terms. {result}."
     except Exception as e:
+        print(f"ERROR: Prediction failed: {str(e)}", file=sys.stderr)
         return f"❌ ERROR: Processing failed. {str(e)}"
 
 # === GRADIO UI CONFIGURATION ===
@@ -138,28 +158,22 @@ custom_css = """
 
 .brand-header {
     background: #ffffff !important;
-    padding: 2rem 1.5rem;
-    border-bottom: 2px solid #f0f0f0;
-    margin-bottom: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    text-align: center;
+    padding: 2.5rem 1.5rem !important;
+    border-bottom: 2px solid #f0f0f0 !important;
+    margin-bottom: 2.5rem !important;
+    text-align: center !important;
 }
 
 .brand-header img {
     height: 100px !important;
     width: auto !important;
-    margin: 0 !important;
+    margin: 0 auto 1.5rem auto !important;
+    display: block !important;
     filter: none !important;
 }
 
 .header-text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 100%;
 }
 
 .brand-header h1 {
@@ -218,14 +232,12 @@ custom_css = """
 }
 """
 with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
-    with gr.Row(elem_classes="brand-header"):
+    with gr.Column(elem_classes="brand-header"):
         gr.HTML("""
-            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                <img src="/static/logo.png" alt="Kavi.ai Logo" />
-                <div class="header-text">
-                    <h1>Customer Churn Intelligence</h1>
-                    <p>Enterprise Prediction Engine • Powered by Kavi.ai MLOps</p>
-                </div>
+            <img src="/static/logo.png" alt="Kavi.ai Logo" />
+            <div class="header-text">
+                <h1>Telco Customer Churn Prediction</h1>
+                <p>Enterprise Prediction Engine • Powered by Kavi.ai MLOps</p>
             </div>
         """)
     
