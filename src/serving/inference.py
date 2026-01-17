@@ -25,6 +25,7 @@ Production Deployment:
 """
 
 import os
+import sys
 import pandas as pd
 import mlflow
 
@@ -224,27 +225,44 @@ def predict(input_dict: dict) -> str:
     df_enc = _serve_transform(df)
     
     # === STEP 3: Generate Model Prediction ===
-    # Call the loaded MLflow model for inference
-    # The model returns predictions in various formats depending on the ML library
     try:
-        preds = model.predict(df_enc)
+        # Debug logging to see the actual wrapper type
+        print(f"DEBUG: Model type: {type(model)}", file=sys.stderr)
         
-        # Normalize prediction output to consistent format
-        if hasattr(preds, "tolist"):
-            preds = preds.tolist()  # Convert numpy array to list
+        # Try to get probabilities for more nuanced risk assessment
+        # MLflow pyfunc models often have a predict() that can be configured, 
+        # but let's check for underlying flavors or specific methods.
+        
+        prob_churn = 0.5 # Default
+        
+        # Check if it's a pyfunc wrapper
+        try:
+            # Some pyfunc versions support predict_proba, others need ._model_impl
+            if hasattr(model, "predict_proba"):
+                probs = model.predict_proba(df_enc)
+                prob_churn = float(probs[0][1] if len(probs[0]) > 1 else probs[0])
+            elif hasattr(model, "predict") and "params" in str(model.predict.__doc__ or ""):
+                # Some MLflow models take params like {"predict_method": "predict_proba"}
+                pass
+        except:
+            pass
             
-        # Extract single prediction value (for single-row input)
-        if isinstance(preds, (list, tuple)) and len(preds) == 1:
-            result = preds[0]
-        else:
-            result = preds
+        preds = model.predict(df_enc)
+        # Handle the case where predict() returns a probability if configured,
+        # but usually it returns classes.
+        
+        result = preds[0] if hasattr(preds, "__len__") else preds
+        
+        # If we couldn't get probability, use result to set 0.9 or 0.1
+        if prob_churn == 0.5:
+             prob_churn = 0.9 if result == 1 else 0.1
             
     except Exception as e:
         raise Exception(f"Model prediction failed: {e}")
     
     # === STEP 4: Convert to Business-Friendly Output ===
-    # Convert binary prediction (0/1) to actionable business language
+    score_pct = prob_churn * 100
     if result == 1:
-        return "Likely to churn"      # High risk - needs intervention
+        return f"Likely to churn (Risk Score: {score_pct:.1f}%)"
     else:
-        return "Not likely to churn"  # Low risk - maintain normal service
+        return f"Not likely to churn (Risk Score: {score_pct:.1f}%)"

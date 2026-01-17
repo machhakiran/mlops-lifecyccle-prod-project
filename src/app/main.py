@@ -104,7 +104,7 @@ app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 import sys
 
 def gradio_interface(
-    gender, Partner, Dependents, PhoneService, MultipleLines,
+    gender, SeniorCitizen, Partner, Dependents, PhoneService, MultipleLines,
     InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
     TechSupport, StreamingTV, StreamingMovies, Contract,
     PaperlessBilling, PaymentMethod, tenure, MonthlyCharges, TotalCharges
@@ -114,6 +114,7 @@ def gradio_interface(
     """
     data = {
         "gender": gender,
+        "SeniorCitizen": 1 if SeniorCitizen == "Yes" else 0,
         "Partner": Partner,
         "Dependents": Dependents,
         "PhoneService": PhoneService,
@@ -180,16 +181,16 @@ custom_css = """
 
 .brand-header {
     background: #ffffff !important;
-    padding: 2.5rem 1.5rem !important;
+    padding: 1.2rem !important;
     border-bottom: 2px solid #f0f0f0 !important;
-    margin-bottom: 2.5rem !important;
+    margin-bottom: 1.5rem !important;
     text-align: center !important;
 }
 
 .brand-header img {
-    height: 100px !important;
+    height: 70px !important;
     width: auto !important;
-    margin: 0 auto 1.5rem auto !important;
+    margin: 0 auto 0.8rem auto !important;
     display: block !important;
     filter: none !important;
 }
@@ -199,7 +200,7 @@ custom_css = """
 }
 
 .brand-header h1 {
-    font-size: 1.8rem !important;
+    font-size: 1.6rem !important;
     font-weight: 700 !important;
     color: #1a237e !important;
     margin: 0 !important;
@@ -207,9 +208,9 @@ custom_css = """
 }
 
 .brand-header p {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: #546e7a;
-    margin: 0.2rem 0 0 0 !important;
+    margin: 0.1rem 0 0 0 !important;
     font-weight: 500;
 }
 
@@ -278,70 +279,61 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
         """)
     
     with gr.Row():
-        with gr.Column(scale=3):
+        with gr.Column(scale=4):
             with gr.Row():
                 with gr.Column(elem_classes="input-section"):
-                    gr.Markdown("### 👤 Profile & Demographics")
-                    gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Male", info="Customer gender")
-                    Partner = gr.Radio(["Yes", "No"], label="Has Partner?", value="No", info="Marital / partnership status")
-                    Dependents = gr.Radio(["Yes", "No"], label="Has Dependents?", value="No", info="Children or other dependents")
-                    tenure = gr.Slider(label="Tenure (Months)", value=12, minimum=0, maximum=72, step=1, info="Relationship length with telco")
+                    gr.Markdown("### 👤 Profile")
+                    gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Male")
+                    SeniorCitizen = gr.Radio(["No", "Yes"], label="Senior?", value="No")
+                    Partner = gr.Radio(["Yes", "No"], label="Partner?", value="No")
+                    Dependents = gr.Radio(["Yes", "No"], label="Dependents?", value="No")
+                    tenure = gr.Slider(label="Tenure (M)", value=12, minimum=0, maximum=72, step=1)
                 
                 with gr.Column(elem_classes="input-section"):
-                    gr.Markdown("### 📡 Device & Connectivity")
-                    InternetService = gr.Dropdown(["Fiber optic", "DSL", "No"], label="Internet Connectivity", value="Fiber optic")
-                    PhoneService = gr.Radio(["Yes", "No"], label="Phone Line Activation", value="Yes")
-                    MultipleLines = gr.Dropdown(["No phone service", "No", "Yes"], label="Multiple Lines Selection", value="No")
-                    OnlineSecurity = gr.Dropdown(["No internet service", "No", "Yes"], label="Online Security Guard", value="No")
-                    OnlineBackup = gr.Dropdown(["No internet service", "No", "Yes"], label="Cloud Backup Status", value="No")
+                    gr.Markdown("### 📡 Device")
+                    InternetService = gr.Dropdown(["Fiber optic", "DSL", "No"], label="Internet", value="Fiber optic")
+                    PhoneService = gr.Radio(["Yes", "No"], label="Phone", value="Yes")
+                    MultipleLines = gr.Dropdown(["No phone service", "No", "Yes"], label="Lines", value="No")
+                    OnlineSecurity = gr.Dropdown(["No internet service", "No", "Yes"], label="Security", value="No")
+                    OnlineBackup = gr.Dropdown(["No internet service", "No", "Yes"], label="Backup", value="No")
             
             with gr.Row():
                 with gr.Column(elem_classes="input-section"):
-                    gr.Markdown("### 📽️ Media & Support")
-                    DeviceProtection = gr.Dropdown(["No internet service", "No", "Yes"], label="Device Insurance", value="No")
-                    TechSupport = gr.Dropdown(["No internet service", "No", "Yes"], label="Premium Tech Support", value="No")
-                    StreamingTV = gr.Dropdown(["No internet service", "No", "Yes"], label="TV Streaming Plan", value="No")
-                    StreamingMovies = gr.Dropdown(["No internet service", "No", "Yes"], label="Cinema Streaming Plan", value="No")
+                    gr.Markdown("### 📽️ Media")
+                    DeviceProtection = gr.Dropdown(["No internet service", "No", "Yes"], label="Insurance", value="No")
+                    TechSupport = gr.Dropdown(["No internet service", "No", "Yes"], label="Tech Support", value="No")
+                    StreamingTV = gr.Dropdown(["No internet service", "No", "Yes"], label="TV", value="No")
+                    StreamingMovies = gr.Dropdown(["No internet service", "No", "Yes"], label="Movies", value="No")
 
                 with gr.Column(elem_classes="input-section"):
-                    gr.Markdown("### 💳 Business & Billing")
-                    Contract = gr.Dropdown(["Month-to-month", "One year", "Two year"], label="Contract Type", value="Month-to-month")
-                    PaperlessBilling = gr.Radio(["Yes", "No"], label="Paperless Invoicing", value="Yes")
-                    PaymentMethod = gr.Dropdown(["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], label="Payment Channel", value="Electronic check")
+                    gr.Markdown("### 💳 Business")
+                    Contract = gr.Dropdown(["Month-to-month", "One year", "Two year"], label="Contract", value="Month-to-month")
+                    PaperlessBilling = gr.Radio(["Yes", "No"], label="Paperless", value="Yes")
+                    PaymentMethod = gr.Dropdown(["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], label="Payment", value="Electronic check")
                     with gr.Row():
-                        MonthlyCharges = gr.Number(label="Monthly Rate ($)", value=75.0, precision=2)
-                        TotalCharges = gr.Number(label="Accrued Total ($)", value=900.0, precision=2)
+                        MonthlyCharges = gr.Number(label="Monthly ($)", value=75.0, precision=2)
+                        TotalCharges = gr.Number(label="Total ($)", value=900.0, precision=2)
 
-        with gr.Column(scale=1):
-            gr.Markdown("### 📈 Intelligent Analysis")
-            predict_btn = gr.Button("🔍 ANALYZE RETENTION RISK", variant="primary", elem_classes="predict-btn")
+        with gr.Column(scale=2):
+            gr.Markdown("### 📈 Risk Report")
+            predict_btn = gr.Button("🔍 ANALYZE RISK", variant="primary", elem_classes="predict-btn")
             output_result = gr.Textbox(
-                label="Risk Assessment Report", 
-                lines=8, 
+                label="Assessment", 
+                lines=5, 
                 interactive=False, 
-                placeholder="Submit profile for AI analysis...",
                 elem_classes="output-box"
             )
-            gr.Markdown("""
-            ---
-            **Strategic Recommendation:**
-            Automated churn risk assessment using calibrated XGBoost classifier. 
-            Confidence threshold: **0.35**
-            """)
-
-    with gr.Row():
-        log_window = gr.Textbox(
-            label="⌨️ System Process Logs (Console Mode)",
-            lines=6,
-            interactive=False,
-            placeholder="System waiting for process trigger...",
-            elem_classes="console-log"
-        )
+            log_window = gr.Textbox(
+                label="⌨️ Process Logs",
+                lines=8,
+                interactive=False,
+                elem_classes="console-log"
+            )
 
     predict_btn.click(
         gradio_interface,
         inputs=[
-            gender, Partner, Dependents, PhoneService, MultipleLines,
+            gender, SeniorCitizen, Partner, Dependents, PhoneService, MultipleLines,
             InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
             TechSupport, StreamingTV, StreamingMovies, Contract,
             PaperlessBilling, PaymentMethod, tenure, MonthlyCharges, TotalCharges
