@@ -293,11 +293,11 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
             with gr.Row():
                 with gr.Column(elem_classes="input-section"):
                     gr.Markdown("### 👤 Profile")
-                    gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Male")
+                    gender = gr.Dropdown(["Male", "Female"], label="Gender", value="Female")
                     SeniorCitizen = gr.Radio(["No", "Yes"], label="Senior?", value="No")
                     Partner = gr.Radio(["Yes", "No"], label="Partner?", value="No")
                     Dependents = gr.Radio(["Yes", "No"], label="Dependents?", value="No")
-                    tenure = gr.Slider(label="Tenure (M)", value=12, minimum=0, maximum=72, step=1)
+                    tenure = gr.Slider(label="Tenure (M)", value=1, minimum=0, maximum=72, step=1)
                 
                 with gr.Column(elem_classes="input-section"):
                     gr.Markdown("### 📡 Device")
@@ -321,8 +321,8 @@ with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
                     PaperlessBilling = gr.Radio(["Yes", "No"], label="Paperless", value="Yes")
                     PaymentMethod = gr.Dropdown(["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], label="Payment", value="Electronic check")
                     with gr.Row():
-                        MonthlyCharges = gr.Number(label="Monthly ($)", value=75.0, precision=2)
-                        TotalCharges = gr.Number(label="Total ($)", value=900.0, precision=2)
+                        MonthlyCharges = gr.Number(label="Monthly ($)", value=95.0, precision=2)
+                        TotalCharges = gr.Number(label="Total ($)", value=95.0, precision=2)
 
         with gr.Column(scale=1):
             gr.Markdown("### 📈 Risk Report")
