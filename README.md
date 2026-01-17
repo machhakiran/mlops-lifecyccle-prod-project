@@ -29,42 +29,41 @@ A production-ready machine learning solution for predicting customer churn in th
 
 ```mermaid
 graph TD
-    subgraph "1. Development & Experimentation"
-        DS[Data Scientist] -->|Commit Code| Git[Git Repository]
-        DS -->|Run Experiments| Exp[MLflow Tracking]
-        EDA[Exploratory Data Analysis] --> Feature[Feature Engineering]
-        Feature --> Exp
+    subgraph "Phase 1: Environment & Initialization"
+        S1[Step 1: make install] -->|Setup Venv| S2[Step 2: make check-data]
+        S2 -->|Great Expectations| VAL{Valid?}
+        VAL -->|Yes| S3[Step 3: make mlflowrun]
     end
 
-    subgraph "2. CI/CD Pipeline (GitHub Actions)"
-        Git -->|Trigger| CI[CI: Lint & Unit Tests]
-        CI -->|Success| Build[Build Docker Image]
-        Build --> TrainOps[Automated Training Pipeline]
-        TrainOps -->|Log Artifacts| Eval[Model Evaluation]
+    subgraph "Phase 2: Training & Performance"
+        S3 -->|Tracking UI| S4[Step 4: make train]
+        S4 -->|XGBoost + Metrics| LOG[Log to MLflow]
+        LOG --> EVAL[Performance Analysis]
     end
 
-    subgraph "3. Model Governance (MLflow)"
-        Eval -->|Metrics > Threshold| Reg[Register Model]
-        Reg -->|Versioning| MR[Model Registry]
-        MR -->|Manual/Auto Approval| Staging[Staging Tag]
-        Staging -->|Integration Tests| Prod[Production Tag]
+    subgraph "Phase 3: Governance & Registry"
+        EVAL --> S5[Step 5: make save-model]
+        S5 -->|Automatic PRD Tag| REG[MLflow Model Registry]
     end
 
-    subgraph "4. Deployment & Operations"
-        Prod -->|CD Trigger| Deploy[Deploy to K8s/Docker]
-        Deploy -->|Serve| API[FastAPI Inference]
-        API -->|Real-time| Mon[Monitoring & Drift Detection]
-        Mon -->|Data Drift| Alert[Trigger Retraining]
+    subgraph "Phase 4: Serving & Deployment"
+        REG --> S6[Step 6: make uirun]
+        S6 -->|FastAPI + Gradio| APP[Kavi.ai Web UI]
+        APP --> S7[Step 7: make git-push]
+        S7 -->|CI/CD Sync| VCS[Git Repository]
     end
 
-    Alert -.->|Feedback Loop| DS
+    subgraph "Phase 5: Production (Docker)"
+        S7 -.->|Trigger| D1[Step 8: make docker-build]
+        D1 --> D2[Step 9: make docker-push]
+    end
 
-    style DS fill:#e1f5fe,stroke:#01579b
-    style Git fill:#f3e5f5,stroke:#4a148c
-    style TrainOps fill:#e8f5e9,stroke:#1b5e20
-    style MR fill:#fff3e0,stroke:#e65100
-    style API fill:#e0f7fa,stroke:#006064
-    style Mon fill:#ffebee,stroke:#b71c1c
+    style S1 fill:#e8eaf6,stroke:#1a237e,stroke-width:2px
+    style S4 fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px
+    style S5 fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style S6 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style APP fill:#1a237e,color:#fff
+    style REG fill:#e65100,color:#fff
 ```
 
 ## Setup & Installation
