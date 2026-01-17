@@ -138,24 +138,28 @@ custom_css = """
 
 .brand-header {
     background: #ffffff !important;
-    padding: 1.5rem 2rem;
+    padding: 2rem 1.5rem;
     border-bottom: 2px solid #f0f0f0;
     margin-bottom: 2.5rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 2rem;
+    justify-content: center;
+    gap: 1.5rem;
+    text-align: center;
 }
 
 .brand-header img {
-    height: 50px !important;
+    height: 100px !important;
     width: auto !important;
     margin: 0 !important;
-    filter: none !important; /* Keep original brand colors */
+    filter: none !important;
 }
 
 .header-text {
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .brand-header h1 {
@@ -213,14 +217,15 @@ custom_css = """
     font-size: 0.9rem;
 }
 """
-
 with gr.Blocks(title="Kavi.ai | Churn Intelligence") as demo:
     with gr.Row(elem_classes="brand-header"):
         gr.HTML("""
-            <img src="/static/logo.png" alt="Kavi.ai Logo" />
-            <div class="header-text">
-                <h1>Customer Churn Intelligence</h1>
-                <p>Enterprise Prediction Engine • Powered by Kavi.ai MLOps</p>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                <img src="/static/logo.png" alt="Kavi.ai Logo" />
+                <div class="header-text">
+                    <h1>Customer Churn Intelligence</h1>
+                    <p>Enterprise Prediction Engine • Powered by Kavi.ai MLOps</p>
+                </div>
             </div>
         """)
     
