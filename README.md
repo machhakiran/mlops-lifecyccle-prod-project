@@ -30,7 +30,7 @@ A production-ready machine learning solution for predicting customer churn in th
 This project follows a strict MLOps pipeline to ensure high-quality model deployment. The diagram below illustrates how code and data evolve from local development to production.
 
 ```mermaid
-graph LR
+graph TD
     %% Styles
     classDef phasestyle fill:#f9f9f9,stroke:#333,stroke-width:2px
     classDef stepstyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
@@ -38,27 +38,23 @@ graph LR
     classDef artifactstyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px
 
     subgraph P1 [Phase 1: Local Dev & Validation]
-        direction TB
         S1[make install/check-data]:::stepstyle --> val{Data Valid?}:::decisionstyle
         val -->|Yes| S2[make train]:::stepstyle
         val -->|No| Fix[Fix Data]
     end
 
     subgraph P2 [Phase 2: Experimentation & Training]
-        direction TB
         S2 -->|Log Metrics| MLflow[MLflow Tracking]:::artifactstyle
         MLflow --> Eval{Performance OK?}:::decisionstyle
     end
 
     subgraph P3 [Phase 3: Model Registry]
-        direction TB
         Eval -->|Yes| S3[make save-model]:::stepstyle
         S3 --> Reg[Model Registry]:::artifactstyle
         Reg -->|Tag: Production| ProdModel[Production Model]:::artifactstyle
     end
 
     subgraph P4 [Phase 4: CI/CD & Deployment]
-        direction TB
         ProdModel --> S4[make git-push]:::stepstyle
         S4 -->|Trigger CI| GH[GitHub Actions]:::stepstyle
         GH -->|Build| Docker[make docker-build]:::stepstyle
